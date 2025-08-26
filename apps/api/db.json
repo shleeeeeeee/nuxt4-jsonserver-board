@@ -1,4 +1,20 @@
 {
-  "posts": [],
-  "comments": []
+  "posts": [
+    {
+      "id": 1,
+      "title": "첫 번째 게시글",
+      "content": "게시글 내용입니다.",
+      "author": "작성자1",
+      "createdAt": "2024-01-01T00:00:00Z",
+      "views": 10
+    },
+    {
+      "id": 2,
+      "title": "두 번째 게시글",
+      "content": "두 번째 내용입니다.",
+      "author": "작성자2",
+      "createdAt": "2024-01-02T00:00:00Z",
+      "views": 20
+    }
+  ]
 }

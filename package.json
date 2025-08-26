@@ -6,13 +6,18 @@
   "scripts": {
     "dev": "concurrently -n API,WEB -c auto \"pnpm -C apps/api dev\" \"pnpm -C apps/web dev\"",
     "dev:api": "pnpm -C apps/api dev",
-    "dev:web": "pnpm -C apps/web dev"
+    "dev:web": "pnpm -C apps/web dev",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "packageManager": "pnpm@10.14.0",
+  "packageManager": "pnpm@10.15.0",
   "devDependencies": {
-    "concurrently": "^9.2.0"
+    "@antfu/eslint-config": "^3.16.0",
+    "@oxc-parser/binding-darwin-arm64": "^0.82.3",
+    "concurrently": "^9.2.0",
+    "eslint": "^9.33.0"
   }
 }
