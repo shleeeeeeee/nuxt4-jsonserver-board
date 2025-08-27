@@ -1,56 +1,74 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
-type Row = {
+const route = useRoute()
+const router = useRouter()
+const postId = route.params.id as string
+
+type Post = {
   id: number
-  category: '전체'|'채용'|'입찰'|'모집'|'행사'|'홍보'|'자격'|'교육'|'공지'
   title: string
-  date: string // YYYY.MM.DD
-  hasFile?: boolean
+  content: string
+  author: string
+  createdAt: string
+  views: number
 }
 
-const tabs = ['전체','채용','입찰','모집','행사','홍보','자격','교육'] as const
-const activeTab = ref<(typeof tabs)[number]>('전체')
+const post = ref<Post | null>(null)
+const loading = ref(true)
+const error = ref('')
 
-const searchField = ref<'title'|'content'>('title')
-const keyword = ref('')
+// 하드코딩된 게시글 데이터
+const postsData = [
+  { id: 561517, title: '동영상 테스트', content: '동영상 테스트를 위한 게시글입니다. 다양한 동영상 형식을 테스트해보겠습니다.', author: '관리자', createdAt: '2025-07-28T00:00:00Z', views: 15 },
+  { id: 561571, title: '링크 테스트', content: '링크 기능을 테스트하기 위한 게시글입니다. 외부 링크와 내부 링크를 모두 테스트해보겠습니다.', author: '관리자', createdAt: '2025-08-07T00:00:00Z', views: 8 },
+  { id: 561473, title: 'testtest_1', content: '테스트 게시글 1번입니다. 다양한 기능을 테스트해보겠습니다.', author: '테스터', createdAt: '2025-06-23T00:00:00Z', views: 12 },
+  { id: 561472, title: 'test_C', content: '테스트 게시글 C입니다. 홍보 관련 내용을 담고 있습니다.', author: '홍보팀', createdAt: '2025-06-23T00:00:00Z', views: 25 },
+  { id: 561471, title: 'test_a', content: '테스트 게시글 A입니다. 일반적인 내용을 담고 있습니다.', author: '일반사용자', createdAt: '2025-06-23T00:00:00Z', views: 18 },
+  { id: 561457, title: 'test11', content: '테스트 게시글 11번입니다. 다양한 내용을 테스트해보겠습니다.', author: '테스터', createdAt: '2025-06-19T00:00:00Z', views: 22 },
+  { id: 561456, title: 'test_test', content: '테스트용 게시글입니다. 게시판 기능을 점검하기 위한 내용입니다.', author: '시스템관리자', createdAt: '2025-06-19T00:00:00Z', views: 30 },
+  { id: 561181, title: '공지사항 - 교육', content: '교육 관련 공지사항입니다. 새로운 교육 과정과 일정을 안내드립니다.', author: '교육팀', createdAt: '2025-03-28T00:00:00Z', views: 45 },
+  { id: 561180, title: '공지사항 - 자격', content: '자격 관련 공지사항입니다. 자격증 발급 및 갱신에 관한 안내입니다.', author: '자격팀', createdAt: '2025-03-28T00:00:00Z', views: 38 },
+  { id: 561179, title: '공지사항 - 홍보', content: '홍보 관련 공지사항입니다. 새로운 서비스와 이벤트를 소개합니다.', author: '홍보팀', createdAt: '2025-03-28T00:00:00Z', views: 52 },
+  { id: 561178, title: '공지사항 - 행사', content: '행사 관련 공지사항입니다. 다양한 행사와 이벤트 일정을 안내드립니다.', author: '행사팀', createdAt: '2025-03-28T00:00:00Z', views: 67 }
+]
 
-const rows = ref<Row[]>([
-  { id: 561517, category: '공지', title: '동영상 테스트', date: '2025.07.28', hasFile: true },
-  { id: 561571, category: '자격', title: '링크 테스트', date: '2025.08.07', hasFile: false },
-  { id: 561473, category: '채용', title: 'testtest_1', date: '2025.06.23', hasFile: false },
-  { id: 561472, category: '홍보', title: 'test_C', date: '2025.06.23', hasFile: true },
-  { id: 561471, category: '전체', title: 'test_a', date: '2025.06.23', hasFile: false },
-  { id: 561457, category: '전체', title: 'test11', date: '2025.06.19', hasFile: true },
-  { id: 561456, category: '전체', title: 'test_test', date: '2025.06.19', hasFile: false },
-  { id: 561181, category: '교육', title: '공지사항 - 교육', date: '2025.03.28', hasFile: true },
-  { id: 561180, category: '자격', title: '공지사항 - 자격', date: '2025.03.28', hasFile: false },
-  { id: 561179, category: '홍보', title: '공지사항 - 홍보', date: '2025.03.28', hasFile: true },
-  { id: 561178, category: '행사', title: '공지사항 - 행사', date: '2025.03.28', hasFile: false }
-])
+// 게시글 데이터 가져오기
+const fetchPost = () => {
+  const foundPost = postsData.find(p => p.id === parseInt(postId))
+  if (foundPost) {
+    post.value = foundPost
+  } else {
+    error.value = '게시글을 찾을 수 없습니다.'
+  }
+  loading.value = false
+}
 
-const filtered = computed(() => {
-  const tabed = activeTab.value === '전체'
-      ? rows.value
-      : rows.value.filter(r => r.category === activeTab.value)
-  const kw = keyword.value.trim().toLowerCase()
-  if (!kw) return tabed
-  // searchField는 현재 UI만 반영. 실제 내용검색은 백엔드 붙일 때 처리.
-  return tabed.filter(r => r.title.toLowerCase().includes(kw))
+// 목록으로 돌아가기
+const goToList = () => {
+  router.push('/')
+}
+
+// 수정 페이지로 이동
+const editPost = () => {
+  router.push(`/post/${postId}/edit`)
+}
+
+// 게시글 삭제
+const deletePost = () => {
+  if (!confirm('정말로 이 게시글을 삭제하시겠습니까?')) {
+    return
+  }
+
+  // 하드코딩된 데이터에서는 실제 삭제는 하지 않고 목록으로만 이동
+  alert('게시글이 삭제되었습니다.')
+  router.push('/')
+}
+
+onMounted(() => {
+  fetchPost()
 })
-
-const page = ref(1)
-const pageSize = 10
-const pageCount = computed(() => Math.max(1, Math.ceil(filtered.value.length / pageSize)))
-const pageItems = computed(() => {
-  const start = (page.value - 1) * pageSize
-  return filtered.value.slice(start, start + pageSize)
-})
-const goPage = (n: number) => { page.value = Math.min(Math.max(1, n), pageCount.value) }
-const onSearch = () => { page.value = 1 }
-
-// footer: TOP 버튼
-const toTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
 </script>
 
 <template>
@@ -94,85 +112,59 @@ const toTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
     <!-- 메인 콘텐츠 영역 -->
     <main class="main-content">
       <div class="content-wrapper">
-        <!-- 탭 -->
-        <div class="tabs">
-          <button
-              v-for="t in tabs"
-              :key="t"
-              class="tab"
-              :class="{ active: activeTab === t }"
-              @click="activeTab = t; goPage(1)"
-          >
-            {{ t }}
-          </button>
+        <!-- 브레드크럼 -->
+        <div class="breadcrumb">
+          <a href="/" class="breadcrumb-link">홈</a>
+          <span class="breadcrumb-separator">></span>
+          <a href="/" class="breadcrumb-link">게시판</a>
+          <span class="breadcrumb-separator">></span>
+          <span class="breadcrumb-current">상세보기</span>
         </div>
 
-        <!-- 검색 바 및 작성 버튼 -->
-        <div class="searchbar">
-          <div class="search-left">
-            <select v-model="searchField" class="select">
-              <option value="title">제목</option>
-              <option value="content">내용</option>
-            </select>
-            <input
-                v-model="keyword"
-                type="text"
-                placeholder="검색어를 입력하세요."
-                class="input"
-                @keyup.enter="onSearch"
-            />
-            <button class="search-btn" @click="onSearch">검색</button>
-          </div>
-          <div class="search-right">
-            <NuxtLink to="/post/create" class="create-btn">게시글 작성</NuxtLink>
-          </div>
+        <!-- 게시글 상세 내용 -->
+        <div v-if="loading" class="loading">
+          <div class="loading-spinner"></div>
+          <p>로딩 중...</p>
         </div>
 
-        <!-- 리스트 테이블 -->
-        <div class="board">
-          <div class="thead">
-            <div class="th no">번호</div>
-            <div class="th cat">분류</div>
-            <div class="th title">제목</div>
-            <div class="th date">등록일</div>
-            <div class="th file">첨부파일</div>
-          </div>
-
-          <div v-if="pageItems.length === 0" class="empty">게시물이 없습니다.</div>
-
-          <div v-for="row in pageItems" :key="row.id" class="trow">
-            <div class="td no">{{ row.id }}</div>
-            <div class="td cat">
-              <span class="chip" :data-type="row.category">{{ row.category }}</span>
-            </div>
-            <div class="td title">
-              <NuxtLink :to="`/post/${row.id}`" class="link">{{ row.title }}</NuxtLink>
-            </div>
-            <div class="td date">{{ row.date }}</div>
-            <div class="td file">
-              <span v-if="row.hasFile" class="file-dot" title="첨부 있음"></span>
-            </div>
-          </div>
+        <div v-else-if="error" class="error">
+          <p>{{ error }}</p>
+          <button @click="goToList" class="btn-primary">목록으로 돌아가기</button>
         </div>
 
-        <!-- 페이지네이션 -->
-        <div class="pager">
-          <button class="pg" @click="goPage(1)" :disabled="page===1">«</button>
-          <button class="pg" @click="goPage(page-1)" :disabled="page===1">‹</button>
-          <button
-              v-for="n in pageCount"
-              :key="n"
-              class="pg"
-              :class="{ active: n===page }"
-              @click="goPage(n)"
-          >{{ n }}</button>
-          <button class="pg" @click="goPage(page+1)" :disabled="page===pageCount">›</button>
-          <button class="pg" @click="goPage(pageCount)" :disabled="page===pageCount">»</button>
+        <div v-else-if="post" class="post-detail">
+          <div class="post-header">
+            <h1 class="post-title">{{ post.title }}</h1>
+            <div class="post-meta">
+              <span class="meta-item">
+                <span class="meta-label">작성자:</span>
+                <span class="meta-value">{{ post.author }}</span>
+              </span>
+              <span class="meta-item">
+                <span class="meta-label">작성일:</span>
+                <span class="meta-value">{{ new Date(post.createdAt).toLocaleDateString('ko-KR') }}</span>
+              </span>
+              <span class="meta-item">
+                <span class="meta-label">조회수:</span>
+                <span class="meta-value">{{ post.views }}</span>
+              </span>
+            </div>
+          </div>
+
+          <div class="post-content">
+            <p>{{ post.content }}</p>
+          </div>
+
+          <div class="post-actions">
+            <button @click="goToList" class="btn-secondary">목록</button>
+            <button @click="editPost" class="btn-primary">수정</button>
+            <button @click="deletePost" class="btn-danger">삭제</button>
+          </div>
         </div>
       </div>
     </main>
 
-    <!-- ===== Footer ===== -->
+    <!-- Footer는 기존과 동일 -->
     <footer class="site-footer">
       <!-- 상단 링크 / 바로가기 -->
       <div class="footer-topbar">
@@ -224,7 +216,7 @@ const toTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
 
         <div class="footer-actions">
           <button class="sitemap-btn">사이트맵</button>
-          <button class="top-btn" @click="toTop">TOP ︿</button>
+          <button class="top-btn" @click="window.scrollTo({ top: 0, behavior: 'smooth' })">TOP ︿</button>
         </div>
       </div>
 
@@ -281,6 +273,104 @@ const toTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
 .main-content { padding: 20px 0; }
 .content-wrapper { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
 
+/* 브레드크럼 */
+.breadcrumb {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 24px; font-size: 14px;
+}
+.breadcrumb-link {
+  color: #6b7280; text-decoration: none;
+}
+.breadcrumb-link:hover {
+  color: #1e40af; text-decoration: underline;
+}
+.breadcrumb-separator {
+  color: #9ca3af;
+}
+.breadcrumb-current {
+  color: #111827; font-weight: 600;
+}
+
+/* 게시글 상세 */
+.post-detail {
+  background: white; border-radius: 12px; padding: 32px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.post-header {
+  border-bottom: 2px solid #e5e7eb; padding-bottom: 24px; margin-bottom: 32px;
+}
+
+.post-title {
+  font-size: 28px; font-weight: 700; color: #111827; margin: 0 0 16px 0; line-height: 1.3;
+}
+
+.post-meta {
+  display: flex; gap: 24px; flex-wrap: wrap;
+}
+
+.meta-item {
+  display: flex; align-items: center; gap: 8px;
+}
+
+.meta-label {
+  color: #6b7280; font-weight: 600;
+}
+
+.meta-value {
+  color: #111827; font-weight: 500;
+}
+
+.post-content {
+  font-size: 16px; line-height: 1.7; color: #374151; margin-bottom: 32px;
+}
+
+.post-actions {
+  display: flex; gap: 12px; justify-content: flex-end; padding-top: 24px; border-top: 1px solid #e5e7eb;
+}
+
+/* 버튼 스타일 */
+.btn-primary, .btn-secondary, .btn-danger {
+  padding: 12px 24px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+}
+
+.btn-primary {
+  background-color: #1e40af; color: white;
+}
+.btn-primary:hover {
+  background-color: #1d4ed8;
+}
+
+.btn-secondary {
+  background-color: #6b7280; color: white;
+}
+.btn-secondary:hover {
+  background-color: #4b5563;
+}
+
+.btn-danger {
+  background-color: #dc2626; color: white;
+}
+.btn-danger:hover {
+  background-color: #b91c1c;
+}
+
+/* 로딩 및 에러 상태 */
+.loading, .error {
+  text-align: center; padding: 60px 20px;
+}
+
+.loading-spinner {
+  width: 40px; height: 40px; border: 4px solid #e5e7eb; border-top: 4px solid #1e40af; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error {
+  color: #dc2626;
+}
+
 /* 반응형 */
 @media (max-width: 1023px){
   .top-nav { display: none; }
@@ -288,74 +378,12 @@ const toTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
   .main-header-content { padding: 10px 20px; }
 }
 
-/* ------- 게시판 UI ------- */
-.tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
-.tab {
-  padding: 10px 18px; border: 1px solid #e5e7eb; background:#fff; border-radius:8px; font-weight:600; color:#4b5563; cursor:pointer; transition: .2s;
+@media (max-width: 768px){
+  .post-detail { padding: 20px; }
+  .post-title { font-size: 24px; }
+  .post-meta { flex-direction: column; gap: 12px; }
+  .post-actions { flex-direction: column; }
 }
-.tab.active, .tab:hover { border-color:#1e40af; color:#1e40af; }
-
-.searchbar { 
-  display:flex; 
-  justify-content:space-between; 
-  align-items:center; 
-  margin-bottom: 18px; 
-  gap: 16px;
-}
-.search-left { display:flex; gap:8px; align-items:center; }
-.search-right { display:flex; align-items:center; }
-.select, .input { border:1px solid #e5e7eb; border-radius:8px; padding:10px 12px; background:#fff; outline:none; }
-.input { flex:1; }
-.search-btn { padding:10px 16px; border:none; border-radius:8px; background:#111827; color:#fff; cursor:pointer; }
-.create-btn { 
-  padding:10px 20px; 
-  border:none; 
-  border-radius:8px; 
-  background:#1e40af; 
-  color:#fff; 
-  cursor:pointer; 
-  text-decoration:none; 
-  font-weight:600;
-  transition: background-color 0.2s;
-}
-.create-btn:hover { background:#1d4ed8; }
-
-.board { border-top:1px #111827; background:#fff; border-radius:12px; overflow:hidden; }
-.thead, .trow { display:grid; grid-template-columns: 120px 120px 1fr 160px 120px; align-items:center; }
-.thead { background:#f9fafb; font-weight:700; color:#374151; border-bottom:1px solid #e5e7eb; }
-.th, .td { padding:14px 16px; }
-.trow { border-bottom:1px solid #f1f5f9; }
-.trow:hover { background:#f9fafb; }
-.td.title .link { color:#111827; text-decoration:none; }
-.td.title .link:hover { text-decoration:underline; }
-.file-dot { font-size: 14px; }
-
-.chip {
-  display:inline-block; padding:4px 10px; border-radius:9999px; font-size:12px; font-weight:700; border:1px solid #e5e7eb; color:#374151; background:#fff;
-}
-.chip[data-type="공지"] { background:#111827; color:#fff; border-color:#111827; }
-.chip[data-type="채용"] { border-color:#ef4444; color:#ef4444; }
-.chip[data-type="홍보"] { border-color:#06b6d4; color:#06b6d4; }
-.chip[data-type="자격"] { border-color:#60a5fa; color:#60a5fa; }
-.chip[data-type="교육"] { border-color:#10b981; color:#10b981; }
-
-.empty { color:#6b7280; text-align:center; padding:60px 20px; }
-.loading { text-align:center; padding:60px 20px; }
-.loading-spinner {
-  width: 40px; height: 40px; border: 4px solid #e5e7eb; border-top: 4px solid #1e40af; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px;
-}
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.pager { display:flex; gap:6px; justify-content:center; align-items:center; padding:16px; }
-.pg {
-  min-width:36px; height:36px; padding:0 10px; border:1px solid #e5e7eb; background:#fff; border-radius:8px; cursor:pointer;
-}
-.pg.active { background:#1e40af; color:#fff; border-color:#1e40af; }
-.pg:disabled { opacity:.4; cursor:not-allowed; }
-@media (max-width: 900px){ .thead, .trow { grid-template-columns: 90px 90px 1fr 120px 80px; } }
 
 /* ===== Footer ===== */
 .site-footer { background:#fff; border-top:1px solid #e5e7eb; margin-top:24px; }
