@@ -1,62 +1,43 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { apiService, type Post } from '~/services/api'
 
 const route = useRoute()
 const router = useRouter()
 const postId = route.params.id as string
 
-type Post = {
-  id: number
-  title: string
-  content: string
-  author: string
-  createdAt: string
-  views: number
-}
-
 const form = ref({
   title: '',
   content: '',
-  author: ''
+  author: '',
+  category: '전체'
 })
 
 const loading = ref(false)
 const errors = ref<Record<string, string>>({})
 const originalPost = ref<Post | null>(null)
 
-// 하드코딩된 게시글 데이터
-const postsData = [
-  { id: 561517, title: '동영상 테스트', content: '동영상 테스트를 위한 게시글입니다. 다양한 동영상 형식을 테스트해보겠습니다.', author: '관리자', createdAt: '2025-07-28T00:00:00Z', views: 15 },
-  { id: 561571, title: '링크 테스트', content: '링크 기능을 테스트하기 위한 게시글입니다. 외부 링크와 내부 링크를 모두 테스트해보겠습니다.', author: '관리자', createdAt: '2025-08-07T00:00:00Z', views: 8 },
-  { id: 561473, title: 'testtest_1', content: '테스트 게시글 1번입니다. 다양한 기능을 테스트해보겠습니다.', author: '테스터', createdAt: '2025-06-23T00:00:00Z', views: 12 },
-  { id: 561472, title: 'test_C', content: '테스트 게시글 C입니다. 홍보 관련 내용을 담고 있습니다.', author: '홍보팀', createdAt: '2025-06-23T00:00:00Z', views: 25 },
-  { id: 561471, title: 'test_a', content: '테스트 게시글 A입니다. 일반적인 내용을 담고 있습니다.', author: '일반사용자', createdAt: '2025-06-23T00:00:00Z', views: 18 },
-  { id: 561457, title: 'test11', content: '테스트 게시글 11번입니다. 다양한 내용을 테스트해보겠습니다.', author: '테스터', createdAt: '2025-06-19T00:00:00Z', views: 22 },
-  { id: 561456, title: 'test_test', content: '테스트용 게시글입니다. 게시판 기능을 점검하기 위한 내용입니다.', author: '시스템관리자', createdAt: '2025-06-19T00:00:00Z', views: 30 },
-  { id: 561181, title: '공지사항 - 교육', content: '교육 관련 공지사항입니다. 새로운 교육 과정과 일정을 안내드립니다.', author: '교육팀', createdAt: '2025-03-28T00:00:00Z', views: 45 },
-  { id: 561180, title: '공지사항 - 자격', content: '자격 관련 공지사항입니다. 자격증 발급 및 갱신에 관한 안내입니다.', author: '자격팀', createdAt: '2025-03-28T00:00:00Z', views: 38 },
-  { id: 561179, title: '공지사항 - 홍보', content: '홍보 관련 공지사항입니다. 새로운 서비스와 이벤트를 소개합니다.', author: '홍보팀', createdAt: '2025-03-28T00:00:00Z', views: 52 },
-  { id: 561178, title: '공지사항 - 행사', content: '행사 관련 공지사항입니다. 다양한 행사와 이벤트 일정을 안내드립니다.', author: '행사팀', createdAt: '2025-03-28T00:00:00Z', views: 67 }
-]
-
 // 게시글 데이터 가져오기
-const fetchPost = () => {
-  const foundPost = postsData.find(p => p.id === parseInt(postId))
-  if (foundPost) {
+const fetchPost = async () => {
+  try {
+    const foundPost = await apiService.getPost(parseInt(postId))
     originalPost.value = foundPost
     
     // 폼에 기존 데이터 설정
     form.value = {
       title: foundPost.title,
       content: foundPost.content,
-      author: foundPost.author
+      author: foundPost.author,
+      category: foundPost.category || '전체'
     }
-  } else {
+  } catch (error) {
+    console.error('게시글 조회 실패:', error)
     alert('게시글을 찾을 수 없습니다.')
     router.push('/')
+  } finally {
+    loading.value = false
   }
-  loading.value = false
 }
 
 // 폼 유효성 검사
@@ -79,19 +60,29 @@ const validateForm = () => {
 }
 
 // 게시글 수정
-const updatePost = () => {
+const updatePost = async () => {
   if (!validateForm()) {
     return
   }
 
   loading.value = true
   
-  // 하드코딩된 데이터에서는 실제 수정은 하지 않고 상세페이지로만 이동
-  setTimeout(() => {
+  try {
+    await apiService.updatePost(parseInt(postId), {
+      title: form.value.title.trim(),
+      content: form.value.content.trim(),
+      author: form.value.author.trim(),
+      category: form.value.category
+    })
+    
     alert('게시글이 수정되었습니다.')
-    loading.value = false
     router.push(`/post/${postId}`)
-  }, 1000)
+  } catch (error) {
+    console.error('게시글 수정 실패:', error)
+    alert('게시글 수정에 실패했습니다. 다시 시도해주세요.')
+  } finally {
+    loading.value = false
+  }
 }
 
 // 목록으로 돌아가기
@@ -110,7 +101,8 @@ const resetForm = () => {
     form.value = {
       title: originalPost.value.title,
       content: originalPost.value.content,
-      author: originalPost.value.author
+      author: originalPost.value.author,
+      category: originalPost.value.category || '전체'
     }
   }
   errors.value = {}
@@ -199,6 +191,25 @@ onMounted(() => {
                 placeholder="제목을 입력하세요"
               />
               <span v-if="errors.title" class="error-message">{{ errors.title }}</span>
+            </div>
+
+            <div class="form-group">
+              <label for="category" class="form-label">분류</label>
+              <select
+                id="category"
+                v-model="form.category"
+                class="form-input"
+              >
+                <option value="전체">전체</option>
+                <option value="채용">채용</option>
+                <option value="입찰">입찰</option>
+                <option value="모집">모집</option>
+                <option value="행사">행사</option>
+                <option value="홍보">홍보</option>
+                <option value="자격">자격</option>
+                <option value="교육">교육</option>
+                <option value="공지">공지</option>
+              </select>
             </div>
 
             <div class="form-group">
