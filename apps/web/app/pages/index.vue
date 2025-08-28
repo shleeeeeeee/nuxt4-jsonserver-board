@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { apiService, type Post } from '@/services/api'
 
 type Row = {
   id: number
@@ -15,42 +16,137 @@ const activeTab = ref<(typeof tabs)[number]>('전체')
 const searchField = ref<'title'|'content'>('title')
 const keyword = ref('')
 
-const rows = ref<Row[]>([
-  { id: 561517, category: '공지', title: '동영상 테스트', date: '2025.07.28', hasFile: true },
-  { id: 561571, category: '자격', title: '링크 테스트', date: '2025.08.07', hasFile: false },
-  { id: 561473, category: '채용', title: 'testtest_1', date: '2025.06.23', hasFile: false },
-  { id: 561472, category: '홍보', title: 'test_C', date: '2025.06.23', hasFile: true },
-  { id: 561471, category: '전체', title: 'test_a', date: '2025.06.23', hasFile: false },
-  { id: 561457, category: '전체', title: 'test11', date: '2025.06.19', hasFile: true },
-  { id: 561456, category: '전체', title: 'test_test', date: '2025.06.19', hasFile: false },
-  { id: 561181, category: '교육', title: '공지사항 - 교육', date: '2025.03.28', hasFile: true },
-  { id: 561180, category: '자격', title: '공지사항 - 자격', date: '2025.03.28', hasFile: false },
-  { id: 561179, category: '홍보', title: '공지사항 - 홍보', date: '2025.03.28', hasFile: true },
-  { id: 561178, category: '행사', title: '공지사항 - 행사', date: '2025.03.28', hasFile: false }
-])
-
-const filtered = computed(() => {
-  const tabed = activeTab.value === '전체'
-      ? rows.value
-      : rows.value.filter(r => r.category === activeTab.value)
-  const kw = keyword.value.trim().toLowerCase()
-  if (!kw) return tabed
-  // searchField는 현재 UI만 반영. 실제 내용검색은 백엔드 붙일 때 처리.
-  return tabed.filter(r => r.title.toLowerCase().includes(kw))
-})
+// 하드코딩된 데이터 완전 제거 - 빈 배열로 시작
+const rows = ref<Row[]>([])
+const loading = ref(false)
+const total = ref(0)
 
 const page = ref(1)
 const pageSize = 10
-const pageCount = computed(() => Math.max(1, Math.ceil(filtered.value.length / pageSize)))
-const pageItems = computed(() => {
-  const start = (page.value - 1) * pageSize
-  return filtered.value.slice(start, start + pageSize)
-})
-const goPage = (n: number) => { page.value = Math.min(Math.max(1, n), pageCount.value) }
-const onSearch = () => { page.value = 1 }
+const pageCount = computed(() => Math.max(1, Math.ceil(total.value / pageSize)))
+
+// 게시글 목록 조회
+const fetchPosts = async () => {
+  console.log('=== fetchPosts 시작 ===')
+  console.log('fetchPosts 호출됨:', { page: page.value, category: activeTab.value, keyword: keyword.value })
+  loading.value = true
+  
+  try {
+    const response = await apiService.getPosts(
+      page.value, 
+      pageSize, 
+      activeTab.value === '전체' ? undefined : activeTab.value,
+      keyword.value.trim() || undefined
+    )
+    
+    console.log('=== API 응답 ===')
+    console.log('API 응답:', response)
+    
+    // 기존 데이터 완전 초기화
+    rows.value = []
+    console.log('rows 초기화 후:', rows.value)
+    
+    // API 응답을 Row 형태로 변환
+    rows.value = response.posts.map((post: Post) => ({
+      id: post.id || 0,
+      category: (post.category as any) || '전체',
+      title: post.title,
+      date: post.createdAt ? new Date(post.createdAt).toLocaleDateString('ko-KR', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      }).replace(/\./g, '.').replace(/\.$/, '') : '',
+      hasFile: post.hasFile || false
+    }))
+    
+    total.value = response.total
+    
+    console.log('=== 데이터 변환 완료 ===')
+    console.log('변환된 rows:', rows.value)
+    console.log('현재 rows 값:', rows.value)
+    console.log('rows 길이:', rows.value.length)
+    
+    // 추가 디버깅 정보
+    console.log('rows 타입:', typeof rows.value)
+    console.log('rows 배열 여부:', Array.isArray(rows.value))
+    console.log('첫 번째 게시글:', rows.value[0])
+    console.log('rows 반응성 확인:', rows.value)
+    
+    // 하드코딩된 데이터 확인
+    console.log('=== 하드코딩된 데이터 확인 ===')
+    console.log('rows 내용 상세:', JSON.stringify(rows.value, null, 2))
+    console.log('모든 게시글 ID:', rows.value.map(r => r.id))
+    console.log('중복 ID 확인:', rows.value.map(r => r.id).filter((id, index, arr) => arr.indexOf(id) !== index))
+    
+    // DOM 렌더링 확인을 위한 지연 실행
+    setTimeout(() => {
+      console.log('=== DOM 렌더링 확인 ===')
+      console.log('DOM에서 게시글 요소 찾기:', document.querySelectorAll('.trow').length)
+      console.log('게시글 요소들:', document.querySelectorAll('.trow'))
+      console.log('loading 상태:', loading.value)
+      console.log('rows 길이 (지연 확인):', rows.value.length)
+      
+      // DOM에 표시된 실제 텍스트 확인
+      const titleElements = document.querySelectorAll('.trow .td.title .link')
+      console.log('DOM에 표시된 제목들:', Array.from(titleElements).map(el => el.textContent))
+    }, 100)
+    
+  } catch (error) {
+    console.error('게시글 목록 조회 실패:', error)
+    rows.value = []
+    total.value = 0
+  } finally {
+    loading.value = false
+    console.log('=== fetchPosts 완료 ===')
+  }
+}
+
+// 게시글 목록 새로고침 (페이지 1로 리셋)
+const refreshPosts = () => {
+  console.log('refreshPosts 호출됨')
+  page.value = 1
+  fetchPosts()
+}
+
+const goPage = (n: number) => { 
+  page.value = Math.min(Math.max(1, n), pageCount.value)
+  fetchPosts()
+}
+
+const onSearch = () => { 
+  page.value = 1
+  fetchPosts()
+}
+
+const onTabChange = () => {
+  page.value = 1
+  fetchPosts()
+}
 
 // footer: TOP 버튼
 const toTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
+
+// 페이지 포커스 시 새로고침
+const handleFocus = () => {
+  console.log('페이지 포커스됨')
+  refreshPosts()
+}
+
+onMounted(() => {
+  console.log('=== onMounted 시작 ===')
+  console.log('onMounted 호출됨')
+  console.log('초기 rows 값:', rows.value)
+  console.log('초기 rows 길이:', rows.value.length)
+  
+  fetchPosts()
+  
+  // 페이지 포커스 시 새로고침
+  window.addEventListener('focus', handleFocus)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('focus', handleFocus)
+})
 </script>
 
 <template>
@@ -101,7 +197,7 @@ const toTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
               :key="t"
               class="tab"
               :class="{ active: activeTab === t }"
-              @click="activeTab = t; goPage(1)"
+              @click="activeTab = t; onTabChange()"
           >
             {{ t }}
           </button>
@@ -138,9 +234,13 @@ const toTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
             <div class="th file">첨부파일</div>
           </div>
 
-          <div v-if="pageItems.length === 0" class="empty">게시물이 없습니다.</div>
+          <div v-if="loading" class="loading">
+            <div class="loading-spinner"></div>
+            게시물을 불러오는 중입니다...
+          </div>
+          <div v-else-if="rows.length === 0" class="empty">게시물이 없습니다.</div>
 
-          <div v-for="row in pageItems" :key="row.id" class="trow">
+          <div v-for="row in rows" :key="row.id" class="trow">
             <div class="td no">{{ row.id }}</div>
             <div class="td cat">
               <span class="chip" :data-type="row.category">{{ row.category }}</span>
