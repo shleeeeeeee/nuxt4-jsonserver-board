@@ -67,7 +67,7 @@
       "author": "시스템관리자",
       "category": "전체",
       "createdAt": "2025-06-19T00:00:00Z",
-      "views": 32,
+      "views": 33,
       "hasFile": false
     },
     {
@@ -127,7 +127,7 @@
       "author": "ㄷㅂㅈㄱㄷㅂㅈㄱ",
       "category": "교육",
       "createdAt": "2025-08-28T08:31:53.973Z",
-      "views": 0,
+      "views": 1,
       "hasFile": false
     },
     {
@@ -138,6 +138,16 @@
       "category": "교육",
       "createdAt": "2025-08-28T08:39:43.835Z",
       "views": 5,
+      "hasFile": false
+    },
+    {
+      "id": "yvvl",
+      "title": "ㄴㄹㅇㅁ",
+      "content": "ㄹㅇㅁㄴㄴㄹㅇㅁㄹㅇㅁㄴㅁㄴㄹㅇ",
+      "author": "ㅁㄴㄹㅇㅇㅁㄴㄹㄹㅇㅁㄴ",
+      "category": "자격",
+      "createdAt": "2025-08-28T09:23:29.660Z",
+      "views": 0,
       "hasFile": false
     }
   ]
