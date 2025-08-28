@@ -1,11 +1,20 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { apiService, type Post } from '~/services/api'
+import { useApi } from '~/composables/useApi'
+import type { Post } from '~/services/api'
 
 const route = useRoute()
 const router = useRouter()
-const postId = route.params.id as string
+
+// useApi composable 사용
+const { fetchPost, updatePost: apiUpdatePost } = useApi()
+
+// postId를 computed로 관리
+const postId = computed(() => {
+  const id = route.params.id
+  return Array.isArray(id) ? id[0] : id
+})
 
 const form = ref({
   title: '',
@@ -14,16 +23,24 @@ const form = ref({
   category: '전체'
 })
 
-const loading = ref(false)
+const loading = ref(true)
 const errors = ref<Record<string, string>>({})
 const originalPost = ref<Post | null>(null)
+const saving = ref(false)
 
 // 게시글 데이터 가져오기
-const fetchPost = async () => {
+const loadPost = async () => {
+  loading.value = true
   try {
-    const foundPost = await apiService.getPost(parseInt(postId))
+    const idValue = postId.value as string
+
+    if (!idValue) {
+      throw new Error('게시글 ID가 없습니다.')
+    }
+
+    const foundPost = await fetchPost(idValue)
     originalPost.value = foundPost
-    
+
     // 폼에 기존 데이터 설정
     form.value = {
       title: foundPost.title,
@@ -43,19 +60,19 @@ const fetchPost = async () => {
 // 폼 유효성 검사
 const validateForm = () => {
   errors.value = {}
-  
+
   if (!form.value.title.trim()) {
     errors.value.title = '제목을 입력해주세요.'
   }
-  
+
   if (!form.value.content.trim()) {
     errors.value.content = '내용을 입력해주세요.'
   }
-  
+
   if (!form.value.author.trim()) {
     errors.value.author = '작성자를 입력해주세요.'
   }
-  
+
   return Object.keys(errors.value).length === 0
 }
 
@@ -65,23 +82,25 @@ const updatePost = async () => {
     return
   }
 
-  loading.value = true
-  
+  saving.value = true
+
   try {
-    await apiService.updatePost(parseInt(postId), {
+    const idValue = postId.value as string
+
+    await apiUpdatePost(idValue, {
       title: form.value.title.trim(),
       content: form.value.content.trim(),
       author: form.value.author.trim(),
       category: form.value.category
     })
-    
+
     alert('게시글이 수정되었습니다.')
-    router.push(`/post/${postId}`)
+    router.push(`/post/${postId.value}`)
   } catch (error) {
     console.error('게시글 수정 실패:', error)
     alert('게시글 수정에 실패했습니다. 다시 시도해주세요.')
   } finally {
-    loading.value = false
+    saving.value = false
   }
 }
 
@@ -92,7 +111,7 @@ const goToList = () => {
 
 // 상세페이지로 돌아가기
 const goToDetail = () => {
-  router.push(`/post/${postId}`)
+  router.push(`/post/${postId.value}`)
 }
 
 // 폼 초기화 (원본 데이터로)
@@ -114,7 +133,7 @@ const scrollToTop = () => {
 }
 
 onMounted(() => {
-  fetchPost()
+  loadPost()
 })
 </script>
 
@@ -161,9 +180,9 @@ onMounted(() => {
       <div class="content-wrapper">
         <!-- 브레드크럼 -->
         <div class="breadcrumb">
-          <a href="/" class="breadcrumb-link">홈</a>
+          <NuxtLink to="/" class="breadcrumb-link">홈</NuxtLink>
           <span class="breadcrumb-separator">></span>
-          <a href="/" class="breadcrumb-link">게시판</a>
+          <NuxtLink to="/" class="breadcrumb-link">게시판</NuxtLink>
           <span class="breadcrumb-separator">></span>
           <NuxtLink :to="`/post/${postId}`" class="breadcrumb-link">상세보기</NuxtLink>
           <span class="breadcrumb-separator">></span>
@@ -178,17 +197,17 @@ onMounted(() => {
 
         <div v-else class="post-form">
           <h1 class="form-title">게시글 수정</h1>
-          
+
           <form @submit.prevent="updatePost" class="form">
             <div class="form-group">
               <label for="title" class="form-label">제목 <span class="required">*</span></label>
               <input
-                id="title"
-                v-model="form.title"
-                type="text"
-                class="form-input"
-                :class="{ 'error': errors.title }"
-                placeholder="제목을 입력하세요"
+                  id="title"
+                  v-model="form.title"
+                  type="text"
+                  class="form-input"
+                  :class="{ 'error': errors.title }"
+                  placeholder="제목을 입력하세요"
               />
               <span v-if="errors.title" class="error-message">{{ errors.title }}</span>
             </div>
@@ -196,9 +215,9 @@ onMounted(() => {
             <div class="form-group">
               <label for="category" class="form-label">분류</label>
               <select
-                id="category"
-                v-model="form.category"
-                class="form-input"
+                  id="category"
+                  v-model="form.category"
+                  class="form-input"
               >
                 <option value="전체">전체</option>
                 <option value="채용">채용</option>
@@ -215,12 +234,12 @@ onMounted(() => {
             <div class="form-group">
               <label for="author" class="form-label">작성자 <span class="required">*</span></label>
               <input
-                id="author"
-                v-model="form.author"
-                type="text"
-                class="form-input"
-                :class="{ 'error': errors.author }"
-                placeholder="작성자를 입력하세요"
+                  id="author"
+                  v-model="form.author"
+                  type="text"
+                  class="form-input"
+                  :class="{ 'error': errors.author }"
+                  placeholder="작성자를 입력하세요"
               />
               <span v-if="errors.author" class="error-message">{{ errors.author }}</span>
             </div>
@@ -228,12 +247,12 @@ onMounted(() => {
             <div class="form-group">
               <label for="content" class="form-label">내용 <span class="required">*</span></label>
               <textarea
-                id="content"
-                v-model="form.content"
-                class="form-textarea"
-                :class="{ 'error': errors.content }"
-                placeholder="내용을 입력하세요"
-                rows="10"
+                  id="content"
+                  v-model="form.content"
+                  class="form-textarea"
+                  :class="{ 'error': errors.content }"
+                  placeholder="내용을 입력하세요"
+                  rows="10"
               ></textarea>
               <span v-if="errors.content" class="error-message">{{ errors.content }}</span>
             </div>
@@ -242,8 +261,8 @@ onMounted(() => {
               <button type="button" @click="goToList" class="btn-secondary">목록</button>
               <button type="button" @click="goToDetail" class="btn-secondary">취소</button>
               <button type="button" @click="resetForm" class="btn-secondary">초기화</button>
-              <button type="submit" :disabled="loading" class="btn-primary">
-                {{ loading ? '수정 중...' : '수정하기' }}
+              <button type="submit" :disabled="saving" class="btn-primary">
+                {{ saving ? '수정 중...' : '수정 완료' }}
               </button>
             </div>
           </form>
@@ -251,113 +270,56 @@ onMounted(() => {
       </div>
     </main>
 
-    <!-- Footer는 기존과 동일 -->
-    <footer class="site-footer">
-      <!-- 상단 링크 / 바로가기 -->
-      <div class="footer-topbar">
-        <div class="left-links">
-          <a href="#">개인정보 처리방침</a>
-          <a href="#">찾아오시는길</a>
-        </div>
-        <div class="right-shortcuts">
-          <div class="jump">
-            <label class="sr-only">보건복지부</label>
-            <select><option>보건복지부</option></select>
-            <button class="btn">이동</button>
-          </div>
-          <div class="jump">
-            <label class="sr-only">직능단체</label>
-            <select><option>직능단체</option></select>
-            <button class="btn">이동</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- 검은색 연락처 바 -->
-      <div class="footer-contacts">
-        <div class="contact-col">
-          <div class="dep">자격</div>
-          <div class="tel">TEL 02)786-0845</div>
-          <div class="fax">FAX 02)786-6524</div>
-        </div>
-        <div class="contact-col">
-          <div class="dep">교육</div>
-          <div class="tel">TEL 02)786-0846</div>
-          <div class="fax">FAX 02)786-0191</div>
-        </div>
-        <div class="contact-col">
-          <div class="dep">운영</div>
-          <div class="tel">TEL 02)786-0190</div>
-          <div class="fax">FAX 02)786-0191</div>
-        </div>
-        <div class="contact-col">
-          <div class="dep">정책</div>
-          <div class="tel">TEL 02)786-0190</div>
-          <div class="fax">FAX 02)786-0191</div>
-        </div>
-        <div class="contact-col">
-          <div class="dep">연구</div>
-          <div class="tel">TEL 02) 786-0248</div>
-          <div class="fax">FAX 02)786-0191</div>
-        </div>
-
-        <div class="footer-actions">
-          <button class="sitemap-btn">사이트맵</button>
-          <button class="top-btn" @click="scrollToTop">TOP ︿</button>
-        </div>
-      </div>
-
-      <!-- 하단 주소/카피라이트 -->
-      <div class="footer-bottom">
-        <div class="org">
-          <div class="org-logo">한국사회복지사협회</div>
-          <div class="addr">
-            주소 (07295) 서울특별시 영등포구 문래로20길 60 (문래동3가, 메가벤처타워) 4층 401~405호 한국사회복지사협회
-          </div>
-          <div class="copy">
-            Copyright ⓒ KOREA ASSOCIATION OF SOCIAL WORKERS. ALL RIGHTS RESERVED.
-          </div>
-        </div>
-      </div>
-    </footer>
+    <!-- TOP 버튼 -->
+    <button class="scroll-top" @click="scrollToTop" title="맨 위로">
+      TOP
+    </button>
   </div>
 </template>
 
 <style scoped>
-.website { min-height: 100vh; background-color: #f5f5f5; }
+/* ===== 글로벌 스타일 ===== */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif; color: #333; }
+a { text-decoration: none; color: inherit; }
+ul { list-style: none; }
 
-/* 최상단 검은색 헤더 */
-.top-header { background-color: #1a1a1a; color: white; padding: 0; }
+/* ===== 헤더 영역 ===== */
+.top-header { background: #1a1a1a; color: #fff; }
 .top-header-content {
-  max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 0 20px;
+  max-width: 1200px; margin: 0 auto; display: flex;
+  justify-content: space-between; align-items: center; padding: 8px 20px;
 }
-.top-nav { display: flex; }
+.top-nav { display: flex; gap: 20px; }
 .top-nav a {
-  color: #ccc; text-decoration: none; padding: 12px 20px; border-right: 1px solid #333; font-size: 14px; transition: all 0.3s;
+  color: #ccc; font-size: 13px; transition: color 0.3s;
 }
-.top-nav a.active, .top-nav a:hover { background-color: #4f46e5; color: white; }
-.top-right { display: flex; align-items: center; gap: 10px; }
-.menu-btn { background: none; border: none; color: #ccc; font-size: 18px; cursor: pointer; padding: 5px; }
+.top-nav a:hover, .top-nav a.active { color: #fff; font-weight: 500; }
+.menu-btn {
+  background: none; border: none; color: #fff; font-size: 20px; cursor: pointer;
+}
 
-/* 메인 헤더 (로고 + 네비게이션) */
-.main-header { background-color: white; border-bottom: 1px solid #e5e7eb; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-.main-header-content {
-  max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 15px 20px;
+.main-header {
+  background: #fff; border-bottom: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
-.logo-section .logo { margin: 0; font-size: 18px; font-weight: bold; }
+.main-header-content {
+  max-width: 1200px; margin: 0 auto; display: flex;
+  justify-content: space-between; align-items: center; padding: 15px 20px;
+}
 .logo-text {
-  color: #1e40af; background: linear-gradient(45deg, #1e40af, #3b82f6);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  font-size: 24px; font-weight: 700; color: #1e40af;
 }
 .main-nav { display: flex; gap: 40px; }
 .nav-item {
-  color: #4b5563; text-decoration: none; font-weight: 500; font-size: 16px; padding: 10px 0; position: relative; transition: color 0.3s;
+  color: #4b5563; font-weight: 500; padding: 8px 0; position: relative; transition: color 0.3s;
 }
-.nav-item.active, .nav-item:hover { color: #1e40af; }
-.nav-item.active::after { content: ''; position: absolute; bottom: -15px; left: 0; right: 0; height: 3px; background-color: #1e40af; }
+.nav-item:hover, .nav-item.active { color: #1e40af; }
+.nav-item.active::after {
+  content: ''; position: absolute; bottom: -15px; left: 0; right: 0; height: 3px; background-color: #1e40af;
+}
 
-/* 메인 콘텐츠 */
-.main-content { padding: 20px 0; }
+/* ===== 메인 콘텐츠 ===== */
+.main-content { padding: 20px 0; min-height: 600px; }
 .content-wrapper { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
 
 /* 브레드크럼 */
@@ -403,8 +365,9 @@ onMounted(() => {
 }
 
 .form-input, .form-textarea {
-  width: 100%; padding: 12px 16px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 16px; transition: border-color 0.2s;
-  box-sizing: border-box;
+  width: 100%; padding: 12px 16px; border: 1px solid #d1d5db; border-radius: 8px;
+  font-size: 16px; transition: border-color 0.2s; box-sizing: border-box;
+  font-family: inherit;
 }
 
 .form-input:focus, .form-textarea:focus {
@@ -416,7 +379,7 @@ onMounted(() => {
 }
 
 .form-textarea {
-  resize: vertical; min-height: 120px;
+  resize: vertical; min-height: 200px;
 }
 
 .error-message {
@@ -424,19 +387,21 @@ onMounted(() => {
 }
 
 .form-actions {
-  display: flex; gap: 12px; justify-content: center; padding-top: 32px; border-top: 1px solid #e5e7eb;
+  display: flex; gap: 12px; justify-content: center; padding-top: 32px;
+  border-top: 1px solid #e5e7eb;
 }
 
 /* 버튼 스타일 */
 .btn-primary, .btn-secondary {
-  padding: 12px 24px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; min-width: 100px;
+  padding: 12px 24px; border: none; border-radius: 8px; font-weight: 600;
+  cursor: pointer; transition: all 0.2s; min-width: 100px; font-size: 14px;
 }
 
 .btn-primary {
   background-color: #1e40af; color: white;
 }
 .btn-primary:hover:not(:disabled) {
-  background-color: #1d4ed8;
+  background-color: #1d4ed8; transform: translateY(-1px);
 }
 .btn-primary:disabled {
   background-color: #9ca3af; cursor: not-allowed;
@@ -446,7 +411,7 @@ onMounted(() => {
   background-color: #6b7280; color: white;
 }
 .btn-secondary:hover {
-  background-color: #4b5563;
+  background-color: #4b5563; transform: translateY(-1px);
 }
 
 /* 로딩 상태 */
@@ -455,7 +420,9 @@ onMounted(() => {
 }
 
 .loading-spinner {
-  width: 40px; height: 40px; border: 4px solid #e5e7eb; border-top: 4px solid #1e40af; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px;
+  width: 40px; height: 40px; border: 4px solid #e5e7eb;
+  border-top: 4px solid #1e40af; border-radius: 50%;
+  animation: spin 1s linear infinite; margin: 0 auto 16px;
 }
 
 @keyframes spin {
@@ -463,64 +430,28 @@ onMounted(() => {
   100% { transform: rotate(360deg); }
 }
 
-/* 반응형 */
-@media (max-width: 1023px){
+/* TOP 버튼 */
+.scroll-top {
+  position: fixed; bottom: 30px; right: 30px; width: 50px; height: 50px;
+  background: #1e40af; color: white; border: none; border-radius: 50%;
+  font-weight: 700; cursor: pointer; z-index: 1000; transition: all 0.3s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+.scroll-top:hover {
+  background: #1d4ed8; transform: translateY(-2px);
+}
+
+/* ===== 반응형 ===== */
+@media (max-width: 1023px) {
   .top-nav { display: none; }
   .main-nav { display: none; }
   .main-header-content { padding: 10px 20px; }
 }
 
-@media (max-width: 768px){
+@media (max-width: 768px) {
   .post-form { padding: 20px; }
   .form-title { font-size: 20px; }
   .form-actions { flex-direction: column; }
   .btn-primary, .btn-secondary { width: 100%; }
-}
-
-/* ===== Footer ===== */
-.site-footer { background:#fff; border-top:1px solid #e5e7eb; margin-top:24px; }
-
-/* 상단 링크/바로가기 */
-.footer-topbar{
-  max-width:1200px; margin:0 auto; padding:10px 20px;
-  display:flex; align-items:center; justify-content:space-between; gap:16px;
-}
-.left-links a{ margin-right:24px; color:#2563eb; font-weight:700; text-decoration:none; }
-.left-links a:hover{ text-decoration:underline; }
-.right-shortcuts{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-.jump select{ border:1px solid #d1d5db; border-radius:6px; padding:8px 10px; background:#fff; }
-.jump .btn{ margin-left:6px; background:#111827; color:#fff; border:none; border-radius:6px; padding:8px 12px; cursor:pointer; }
-
-/* 검은색 연락처 바 */
-.footer-contacts{
-  background:#0a0a0a; color:#fff;
-  display:grid; grid-template-columns: repeat(5,1fr) 200px; gap:24px;
-  align-items:start; padding:18px 20px; justify-items:start;
-}
-.footer-contacts .contact-col{ line-height:1.6; }
-.footer-contacts .dep{ font-weight:800; margin-bottom:2px; }
-.footer-contacts .tel{ font-weight:700; }
-.footer-contacts .fax{ color:#d1d5db; font-weight:700; }
-
-.footer-actions{ align-self:center; justify-self:end; display:flex; gap:10px; }
-.sitemap-btn{ background:#fff; color:#111827; border:none; border-radius:6px; padding:10px 16px; cursor:pointer; }
-.top-btn{ background:transparent; color:#fff; border:none; padding:10px 12px; cursor:pointer; font-weight:800; }
-
-/* 하단 주소/카피라이트 */
-.footer-bottom{
-  max-width:1200px; margin:0 auto; padding:16px 20px 28px; color:#111827; font-size:14px;
-}
-.org-logo{ font-weight:900; margin-bottom:8px; }
-.addr{ color:#4b5563; margin-bottom:6px; }
-.copy{ color:#6b7280; font-size:13px; }
-
-@media (max-width: 1000px){
-  .footer-contacts{ grid-template-columns: 1fr 1fr; }
-  .footer-actions{ justify-self:start; margin-top:8px; }
-}
-
-/* 스크린리더용 */
-.sr-only{
-  position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;
 }
 </style>

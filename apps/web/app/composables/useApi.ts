@@ -1,3 +1,4 @@
+import { ref, readonly } from 'vue'
 import { getApiService } from '~/services/api'
 import type { PostListParams, PostCreateData, PostUpdateData } from '~/services/api'
 
@@ -40,7 +41,7 @@ export const useApi = () => {
     }
 
     // 게시글 상세 조회
-    const fetchPost = async (id: number) => {
+    const fetchPost = async (id: string | number) => {
         try {
             isLoading.value = true
             error.value = null
@@ -70,7 +71,7 @@ export const useApi = () => {
     }
 
     // 게시글 수정
-    const updatePost = async (id: number, data: Partial<PostUpdateData>) => {
+    const updatePost = async (id: string | number, data: Partial<PostUpdateData>) => {
         try {
             isLoading.value = true
             error.value = null
@@ -85,7 +86,7 @@ export const useApi = () => {
     }
 
     // 게시글 삭제
-    const deletePost = async (id: number) => {
+    const deletePost = async (id: string | number) => {
         try {
             isLoading.value = true
             error.value = null

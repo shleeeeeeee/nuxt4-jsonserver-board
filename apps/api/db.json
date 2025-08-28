@@ -7,7 +7,7 @@
       "author": "관리자",
       "category": "공지",
       "createdAt": "2025-07-28T00:00:00Z",
-      "views": 16,
+      "views": 17,
       "hasFile": true
     },
     {
@@ -27,7 +27,7 @@
       "author": "테스터",
       "category": "채용",
       "createdAt": "2025-06-23T00:00:00Z",
-      "views": 13,
+      "views": 15,
       "hasFile": false
     },
     {
@@ -47,7 +47,7 @@
       "author": "일반사용자",
       "category": "전체",
       "createdAt": "2025-06-23T00:00:00Z",
-      "views": 18,
+      "views": 21,
       "hasFile": false
     },
     {
@@ -57,7 +57,7 @@
       "author": "테스터",
       "category": "전체",
       "createdAt": "2025-06-19T00:00:00Z",
-      "views": 22,
+      "views": 23,
       "hasFile": true
     },
     {
@@ -67,7 +67,7 @@
       "author": "시스템관리자",
       "category": "전체",
       "createdAt": "2025-06-19T00:00:00Z",
-      "views": 30,
+      "views": 32,
       "hasFile": false
     },
     {
@@ -77,18 +77,8 @@
       "author": "홍보팀",
       "category": "홍보",
       "createdAt": "2025-03-28T00:00:00Z",
-      "views": 55,
+      "views": 60,
       "hasFile": true
-    },
-    {
-      "id": "561178",
-      "title": "공지사항 - 행사",
-      "content": "행사 관련 공지사항입니다. 다양한 행사와 이벤트 일정을 안내드립니다.",
-      "author": "행사팀",
-      "category": "행사",
-      "createdAt": "2025-03-28T00:00:00Z",
-      "views": 70,
-      "hasFile": false
     },
     {
       "id": "e51c",
@@ -97,7 +87,7 @@
       "author": "테스트",
       "category": "자격",
       "createdAt": "2025-08-28T07:46:33.275Z",
-      "views": 0,
+      "views": 1,
       "hasFile": false
     },
     {
@@ -107,7 +97,47 @@
       "author": "수정",
       "category": "교육",
       "createdAt": "2025-08-28T07:55:32.731Z",
+      "views": 1,
+      "hasFile": false
+    },
+    {
+      "id": "6ec1",
+      "title": "ㅇㅁㄴㄹ",
+      "content": "ㅁㄴㅇㄹㅇㅁㄴㄹ",
+      "author": "ㅁㄴㅇㄻㄴㅇㄹ",
+      "category": "홍보",
+      "createdAt": "2025-08-28T08:19:53.319Z",
       "views": 0,
+      "hasFile": false
+    },
+    {
+      "id": "9f00",
+      "title": "ㅁㄴㄹㅇㅁㄴㄹㅇ",
+      "content": "ㅁㄹㅇㄴㅁㄹㅇㄴㅁㄴㄹㅇㄹㅇㅁㄴ",
+      "author": "ㅁㄴㄹㅇㅁㄴㄹㅇㅁㄹㅇㄴㅁㄴㄹㅇㅇ",
+      "category": "교육",
+      "createdAt": "2025-08-28T08:20:01.423Z",
+      "views": 1,
+      "hasFile": false
+    },
+    {
+      "id": "hft7",
+      "title": "ㄷㅂㅈㄱㅂㅈㄱ",
+      "content": "ㅂㅈㄱㄷㅂㅈㄱㄷㄱㄷㅂㅈ",
+      "author": "ㄷㅂㅈㄱㄷㅂㅈㄱ",
+      "category": "교육",
+      "createdAt": "2025-08-28T08:31:53.973Z",
+      "views": 0,
+      "hasFile": false
+    },
+    {
+      "id": "uy5u",
+      "title": "ㅁㄴㅇㄻㄴㅇ",
+      "content": "ㄻㄴㅇㄻㄴㅇㄹㄴㅇㅁㄹ",
+      "author": "ㄹㅁㄴㅇㄻㄴㅇㄻㄴㅇ",
+      "category": "교육",
+      "createdAt": "2025-08-28T08:39:43.835Z",
+      "views": 1,
       "hasFile": false
     }
   ]

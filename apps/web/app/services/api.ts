@@ -1,5 +1,5 @@
 export interface Post {
-    id: number
+    id: string | number  // ID를 string 또는 number로 처리
     title: string
     content: string
     author: string
@@ -107,7 +107,7 @@ export class ApiService {
         }
     }
 
-    async getPost(id: number): Promise<Post> {
+    async getPost(id: string | number): Promise<Post> {
         const post = await this.request<Post>(`/posts/${id}`)
 
         const updatedPost = { ...post, views: post.views + 1 }
@@ -125,7 +125,11 @@ export class ApiService {
     }
 
     async createPost(data: PostCreateData): Promise<Post> {
+        // ID 생성 (랜덤 4자리 문자열)
+        const generateId = () => Math.random().toString(36).substring(2, 6)
+
         const newPost = {
+            id: generateId(),
             ...data,
             createdAt: new Date().toISOString(),
             views: 0,
@@ -138,14 +142,14 @@ export class ApiService {
         })
     }
 
-    async updatePost(id: number, data: Partial<PostUpdateData>): Promise<Post> {
+    async updatePost(id: string | number, data: Partial<PostUpdateData>): Promise<Post> {
         return await this.request<Post>(`/posts/${id}`, {
             method: 'PATCH',
             body: JSON.stringify(data)
         })
     }
 
-    async deletePost(id: number): Promise<void> {
+    async deletePost(id: string | number): Promise<void> {
         await this.request(`/posts/${id}`, {
             method: 'DELETE'
         })
@@ -171,3 +175,5 @@ export const getApiService = (): ApiService => {
     }
     return _apiService
 }
+
+export const apiService = getApiService()
