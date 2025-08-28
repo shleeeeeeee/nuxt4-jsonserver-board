@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { useApi } from '~/composables/useApi'
 import type { Post } from '~/services/api'
 
 const route = useRoute()
-const router = useRouter()
 const { fetchPost, deletePost } = useApi()
 
 // 반응형으로 postId 관리
@@ -19,19 +18,19 @@ const loading = ref(true)
 const error = ref('')
 const deleting = ref(false)
 
-// 게시글 데이터 가져오기 - 이 부분이 수정됨!
+// 게시글 데이터 가져오기
 const loadPost = async () => {
   try {
     loading.value = true
     error.value = ''
 
-    const idValue = postId.value as string  // 문자열로 처리
+    const idValue = postId.value as string
 
-    if (!idValue) {  // ID 존재 여부만 체크
+    if (!idValue) {
       throw new Error('게시글 ID가 없습니다.')
     }
 
-    const postData = await fetchPost(idValue)  // 문자열 ID 그대로 전달
+    const postData = await fetchPost(idValue)
     post.value = postData
   } catch (err: any) {
     console.error('게시글 로딩 오류:', err)
@@ -50,13 +49,14 @@ const loadPost = async () => {
 
 // 목록으로 돌아가기
 const goToList = () => {
-  router.push('/')
+  navigateTo('/')
 }
 
-// 수정 페이지로 이동
-const editPost = () => {
+// 수정 페이지로 이동 - navigateTo 사용
+const editPost = async () => {
   if (postId.value) {
-    router.push(`/post/${postId.value}/edit`)
+    console.log('수정 페이지로 이동:', `/post/${postId.value}/edit`)
+    await navigateTo(`/post/${postId.value}/edit`)
   }
 }
 
@@ -76,7 +76,7 @@ const handleDeletePost = async () => {
     await deletePost(post.value.id)
 
     alert('게시글이 삭제되었습니다.')
-    router.push('/')
+    await navigateTo('/')
   } catch (err) {
     console.error('게시글 삭제 오류:', err)
     alert('게시글 삭제 중 오류가 발생했습니다.')
@@ -147,9 +147,9 @@ onMounted(() => {
       <div class="content-wrapper">
         <!-- 브레드크럼 -->
         <div class="breadcrumb">
-          <NuxtLink to="/" class="breadcrumb-link">홈</NuxtLink>
+          <NuxtLink to="/apps/web/public" class="breadcrumb-link">홈</NuxtLink>
           <span class="breadcrumb-separator">></span>
-          <NuxtLink to="/" class="breadcrumb-link">게시판</NuxtLink>
+          <NuxtLink to="/apps/web/public" class="breadcrumb-link">게시판</NuxtLink>
           <span class="breadcrumb-separator">></span>
           <span class="breadcrumb-current">상세보기</span>
         </div>
@@ -195,11 +195,18 @@ onMounted(() => {
             <p>{{ post.content }}</p>
           </div>
 
-          <!-- 액션 버튼들 -->
+          <!-- 액션 버튼들 - NuxtLink로 변경 -->
           <div class="post-actions">
             <button @click="goToList" class="btn-secondary">목록</button>
             <div class="right-actions">
-              <button @click="editPost" class="btn-primary">수정</button>
+              <!-- 수정 버튼을 NuxtLink로 변경 -->
+              <NuxtLink
+                  :to="`/post/${postId}/edit`"
+                  class="btn-primary"
+                  style="text-decoration: none; display: inline-block;"
+              >
+                수정
+              </NuxtLink>
               <button @click="handleDeletePost" :disabled="deleting" class="btn-danger">
                 {{ deleting ? '삭제 중...' : '삭제' }}
               </button>
@@ -354,14 +361,15 @@ a { text-decoration: none; color: inherit; }
 }
 
 .right-actions {
-  display: flex; gap: 12px;
+  display: flex; gap: 12px; align-items: center;
 }
 
 /* 버튼 스타일 */
 .btn-primary, .btn-secondary, .btn-danger {
   padding: 12px 24px; border: none; border-radius: 8px;
   font-weight: 600; cursor: pointer; transition: all 0.2s;
-  min-width: 100px; font-size: 14px;
+  min-width: 100px; font-size: 14px; text-align: center;
+  line-height: normal;
 }
 
 .btn-primary {
