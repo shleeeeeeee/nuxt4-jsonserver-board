@@ -75,6 +75,9 @@ const resetForm = () => {
   }
   errors.value = {}
 }
+
+// TOP 버튼 함수
+const toTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
 </script>
 
 <template>
@@ -254,7 +257,7 @@ const resetForm = () => {
 
         <div class="footer-actions">
           <button class="sitemap-btn">사이트맵</button>
-          <button class="top-btn" @click="window.scrollTo({ top: 0, behavior: 'smooth' })">TOP ︿</button>
+          <button class="top-btn" @click="toTop">TOP ︿</button>
         </div>
       </div>
 
