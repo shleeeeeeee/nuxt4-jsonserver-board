@@ -1,27 +1,47 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { apiService, type Post } from '~/services/api'
+import type { Post } from '~/services/api'
 
 const route = useRoute()
 const router = useRouter()
-const postId = route.params.id as string
+const { fetchPost, deletePost } = useApi()
+
+// 반응형으로 postId 관리
+const postId = computed(() => {
+  const id = route.params.id
+  return Array.isArray(id) ? id[0] : id
+})
 
 const post = ref<Post | null>(null)
 const loading = ref(true)
 const error = ref('')
+const deleting = ref(false)
 
 // 게시글 데이터 가져오기
-const fetchPost = async () => {
+const loadPost = async () => {
   try {
-    const foundPost = await apiService.getPost(parseInt(postId))
-    post.value = foundPost
-    
-    // 조회수 증가
-    await apiService.incrementViews(parseInt(postId))
-  } catch (error) {
-    console.error('게시글 조회 실패:', error)
-    error.value = '게시글을 찾을 수 없습니다.'
+    loading.value = true
+    error.value = ''
+
+    const numericId = parseInt(postId.value as string, 10)
+
+    if (isNaN(numericId)) {
+      throw new Error('잘못된 게시글 ID입니다.')
+    }
+
+    const postData = await fetchPost(numericId)
+    post.value = postData
+  } catch (err: any) {
+    console.error('게시글 로딩 오류:', err)
+
+    if (err?.message?.includes('404') || err?.status === 404) {
+      error.value = '게시글을 찾을 수 없습니다.'
+    } else {
+      error.value = '게시글을 불러오는 중 오류가 발생했습니다.'
+    }
+
+    post.value = null
   } finally {
     loading.value = false
   }
@@ -34,27 +54,55 @@ const goToList = () => {
 
 // 수정 페이지로 이동
 const editPost = () => {
-  router.push(`/post/${postId}/edit`)
+  if (postId.value) {
+    router.push(`/post/${postId.value}/edit`)
+  }
 }
 
 // 게시글 삭제
-const deletePost = async () => {
+const handleDeletePost = async () => {
   if (!confirm('정말로 이 게시글을 삭제하시겠습니까?')) {
     return
   }
 
+  if (!post.value) {
+    return
+  }
+
   try {
-    await apiService.deletePost(parseInt(postId))
+    deleting.value = true
+
+    await deletePost(post.value.id)
+
     alert('게시글이 삭제되었습니다.')
     router.push('/')
-  } catch (error) {
-    console.error('게시글 삭제 실패:', error)
-    alert('게시글 삭제에 실패했습니다. 다시 시도해주세요.')
+  } catch (err) {
+    console.error('게시글 삭제 오류:', err)
+    alert('게시글 삭제 중 오류가 발생했습니다.')
+  } finally {
+    deleting.value = false
   }
 }
 
+// 날짜 포맷팅
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}.${month}.${day}`
+}
+
+// 컴포넌트 마운트 시 데이터 가져오기
 onMounted(() => {
-  fetchPost()
+  loadPost()
+})
+
+// route 변경 감지하여 데이터 다시 가져오기
+watch(() => route.params.id, () => {
+  if (route.params.id) {
+    loadPost()
+  }
 })
 </script>
 
@@ -81,7 +129,6 @@ onMounted(() => {
       <div class="main-header-content">
         <div class="logo-section">
           <h1 class="logo">
-            <img alt="Power Social Worker" style="display: none;">
             <span class="logo-text">Power Social Worker</span>
           </h1>
         </div>
@@ -108,19 +155,30 @@ onMounted(() => {
           <span class="breadcrumb-current">상세보기</span>
         </div>
 
-        <!-- 게시글 상세 내용 -->
+        <!-- 로딩 상태 -->
         <div v-if="loading" class="loading">
           <div class="loading-spinner"></div>
-          <p>로딩 중...</p>
+          <p>게시글을 불러오는 중...</p>
         </div>
 
+        <!-- 에러 상태 -->
         <div v-else-if="error" class="error">
-          <p>{{ error }}</p>
-          <button @click="goToList" class="btn-primary">목록으로 돌아가기</button>
+          <div class="error-content">
+            <h2>오류 발생</h2>
+            <p>{{ error }}</p>
+            <div class="error-actions">
+              <button @click="loadPost" class="btn-primary">다시 시도</button>
+              <button @click="goToList" class="btn-secondary">목록으로 돌아가기</button>
+            </div>
+          </div>
         </div>
 
+        <!-- 게시글 상세 내용 -->
         <div v-else-if="post" class="post-detail">
           <div class="post-header">
+            <div class="category-badge">
+              <span class="chip" :data-category="post.category">{{ post.category }}</span>
+            </div>
             <h1 class="post-title">{{ post.title }}</h1>
             <div class="post-meta">
               <span class="meta-item">
@@ -129,7 +187,7 @@ onMounted(() => {
               </span>
               <span class="meta-item">
                 <span class="meta-label">작성일:</span>
-                <span class="meta-value">{{ new Date(post.createdAt).toLocaleDateString('ko-KR') }}</span>
+                <span class="meta-value">{{ formatDate(post.createdAt) }}</span>
               </span>
               <span class="meta-item">
                 <span class="meta-label">조회수:</span>
@@ -139,283 +197,136 @@ onMounted(() => {
           </div>
 
           <div class="post-content">
-            <p>{{ post.content }}</p>
+            <div class="content-text">{{ post.content }}</div>
           </div>
 
           <div class="post-actions">
             <button @click="goToList" class="btn-secondary">목록</button>
             <button @click="editPost" class="btn-primary">수정</button>
-            <button @click="deletePost" class="btn-danger">삭제</button>
+            <button
+                @click="handleDeletePost"
+                class="btn-danger"
+                :disabled="deleting"
+            >
+              <span v-if="deleting">삭제 중...</span>
+              <span v-else>삭제</span>
+            </button>
           </div>
         </div>
       </div>
     </main>
-
-    <!-- Footer는 기존과 동일 -->
-    <footer class="site-footer">
-      <!-- 상단 링크 / 바로가기 -->
-      <div class="footer-topbar">
-        <div class="left-links">
-          <a href="#">개인정보 처리방침</a>
-          <a href="#">찾아오시는길</a>
-        </div>
-        <div class="right-shortcuts">
-          <div class="jump">
-            <label class="sr-only">보건복지부</label>
-            <select><option>보건복지부</option></select>
-            <button class="btn">이동</button>
-          </div>
-          <div class="jump">
-            <label class="sr-only">직능단체</label>
-            <select><option>직능단체</option></select>
-            <button class="btn">이동</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- 검은색 연락처 바 -->
-      <div class="footer-contacts">
-        <div class="contact-col">
-          <div class="dep">자격</div>
-          <div class="tel">TEL 02)786-0845</div>
-          <div class="fax">FAX 02)786-6524</div>
-        </div>
-        <div class="contact-col">
-          <div class="dep">교육</div>
-          <div class="tel">TEL 02)786-0846</div>
-          <div class="fax">FAX 02)786-0191</div>
-        </div>
-        <div class="contact-col">
-          <div class="dep">운영</div>
-          <div class="tel">TEL 02)786-0190</div>
-          <div class="fax">FAX 02)786-0191</div>
-        </div>
-        <div class="contact-col">
-          <div class="dep">정책</div>
-          <div class="tel">TEL 02)786-0190</div>
-          <div class="fax">FAX 02)786-0191</div>
-        </div>
-        <div class="contact-col">
-          <div class="dep">연구</div>
-          <div class="tel">TEL 02) 786-0248</div>
-          <div class="fax">FAX 02)786-0191</div>
-        </div>
-
-        <div class="footer-actions">
-          <button class="sitemap-btn">사이트맵</button>
-          <button class="top-btn" @click="window.scrollTo({ top: 0, behavior: 'smooth' })">TOP ︿</button>
-        </div>
-      </div>
-
-      <!-- 하단 주소/카피라이트 -->
-      <div class="footer-bottom">
-        <div class="org">
-          <div class="org-logo">한국사회복지사협회</div>
-          <div class="addr">
-            주소 (07295) 서울특별시 영등포구 문래로20길 60 (문래동3가, 메가벤처타워) 4층 401~405호 한국사회복지사협회
-          </div>
-          <div class="copy">
-            Copyright ⓒ KOREA ASSOCIATION OF SOCIAL WORKERS. ALL RIGHTS RESERVED.
-          </div>
-        </div>
-      </div>
-    </footer>
   </div>
 </template>
 
 <style scoped>
 .website { min-height: 100vh; background-color: #f5f5f5; }
 
-/* 최상단 검은색 헤더 */
+/* 헤더 */
 .top-header { background-color: #1a1a1a; color: white; padding: 0; }
 .top-header-content {
-  max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 0 20px;
+  max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between;
+  align-items: center; padding: 0 20px;
 }
 .top-nav { display: flex; }
 .top-nav a {
-  color: #ccc; text-decoration: none; padding: 12px 20px; border-right: 1px solid #333; font-size: 14px; transition: all 0.3s;
+  color: #ccc; text-decoration: none; padding: 12px 20px; border-right: 1px solid #333;
+  font-size: 14px; transition: all 0.3s;
 }
 .top-nav a.active, .top-nav a:hover { background-color: #4f46e5; color: white; }
-.top-right { display: flex; align-items: center; gap: 10px; }
-.menu-btn { background: none; border: none; color: #ccc; font-size: 18px; cursor: pointer; padding: 5px; }
+.menu-btn { background: none; border: none; color: #ccc; font-size: 18px; cursor: pointer; }
 
-/* 메인 헤더 (로고 + 네비게이션) */
 .main-header { background-color: white; border-bottom: 1px solid #e5e7eb; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 .main-header-content {
-  max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 15px 20px;
+  max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between;
+  align-items: center; padding: 15px 20px;
 }
-.logo-section .logo { margin: 0; font-size: 18px; font-weight: bold; }
-.logo-text {
-  color: #1e40af; background: linear-gradient(45deg, #1e40af, #3b82f6);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-}
+.logo-text { color: #1e40af; font-size: 24px; font-weight: 700; }
 .main-nav { display: flex; gap: 40px; }
 .nav-item {
-  color: #4b5563; text-decoration: none; font-weight: 500; font-size: 16px; padding: 10px 0; position: relative; transition: color 0.3s;
+  color: #4b5563; text-decoration: none; font-weight: 500; font-size: 16px;
+  padding: 10px 0; position: relative; transition: color 0.3s;
 }
 .nav-item.active, .nav-item:hover { color: #1e40af; }
-.nav-item.active::after { content: ''; position: absolute; bottom: -15px; left: 0; right: 0; height: 3px; background-color: #1e40af; }
 
 /* 메인 콘텐츠 */
-.main-content { padding: 20px 0; }
+.main-content { padding: 20px 0; flex: 1; }
 .content-wrapper { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
 
 /* 브레드크럼 */
 .breadcrumb {
   display: flex; align-items: center; gap: 8px; margin-bottom: 24px; font-size: 14px;
 }
-.breadcrumb-link {
-  color: #6b7280; text-decoration: none;
+.breadcrumb-link { color: #6b7280; text-decoration: none; }
+.breadcrumb-link:hover { color: #1e40af; text-decoration: underline; }
+.breadcrumb-separator { color: #9ca3af; }
+.breadcrumb-current { color: #111827; font-weight: 600; }
+
+/* 로딩 및 에러 */
+.loading { text-align: center; padding: 60px 20px; }
+.loading-spinner {
+  width: 40px; height: 40px; border: 3px solid #f3f4f6; border-top: 3px solid #1e40af;
+  border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px;
 }
-.breadcrumb-link:hover {
-  color: #1e40af; text-decoration: underline;
-}
-.breadcrumb-separator {
-  color: #9ca3af;
-}
-.breadcrumb-current {
-  color: #111827; font-weight: 600;
-}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+.error { text-align: center; padding: 60px 20px; }
+.error-content h2 { color: #dc2626; margin-bottom: 16px; font-size: 24px; }
+.error-content p { color: #6b7280; margin-bottom: 24px; font-size: 16px; }
+.error-actions { display: flex; gap: 12px; justify-content: center; }
 
 /* 게시글 상세 */
 .post-detail {
-  background: white; border-radius: 12px; padding: 32px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  background: white; border-radius: 12px; padding: 32px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
-
-.post-header {
-  border-bottom: 2px solid #e5e7eb; padding-bottom: 24px; margin-bottom: 32px;
+.post-header { border-bottom: 2px solid #e5e7eb; padding-bottom: 24px; margin-bottom: 32px; }
+.category-badge { margin-bottom: 12px; }
+.chip {
+  background: #e5e7eb; color: #374151; padding: 6px 12px;
+  border-radius: 6px; font-size: 13px; font-weight: 500;
 }
+.chip[data-category="교육"] { background: #dbeafe; color: #1e40af; }
+.chip[data-category="홍보"] { background: #fef3c7; color: #d97706; }
+.chip[data-category="자격"] { background: #d1fae5; color: #059669; }
+.chip[data-category="행사"] { background: #fce7f3; color: #be185d; }
+.chip[data-category="채용"] { background: #e0e7ff; color: #6366f1; }
+.chip[data-category="공지"] { background: #fee2e2; color: #dc2626; }
 
-.post-title {
-  font-size: 28px; font-weight: 700; color: #111827; margin: 0 0 16px 0; line-height: 1.3;
-}
+.post-title { font-size: 28px; font-weight: 700; color: #111827; margin: 0 0 16px 0; line-height: 1.3; }
+.post-meta { display: flex; gap: 24px; flex-wrap: wrap; }
+.meta-item { display: flex; align-items: center; gap: 8px; }
+.meta-label { color: #6b7280; font-weight: 600; font-size: 14px; }
+.meta-value { color: #111827; font-weight: 500; }
 
-.post-meta {
-  display: flex; gap: 24px; flex-wrap: wrap;
-}
-
-.meta-item {
-  display: flex; align-items: center; gap: 8px;
-}
-
-.meta-label {
-  color: #6b7280; font-weight: 600;
-}
-
-.meta-value {
-  color: #111827; font-weight: 500;
-}
-
-.post-content {
-  font-size: 16px; line-height: 1.7; color: #374151; margin-bottom: 32px;
+.post-content { margin-bottom: 32px; }
+.content-text {
+  font-size: 16px; line-height: 1.7; color: #374151;
+  min-height: 200px; white-space: pre-wrap;
 }
 
 .post-actions {
-  display: flex; gap: 12px; justify-content: flex-end; padding-top: 24px; border-top: 1px solid #e5e7eb;
+  display: flex; gap: 12px; justify-content: flex-end;
+  padding-top: 24px; border-top: 1px solid #e5e7eb;
 }
 
-/* 버튼 스타일 */
+/* 버튼 */
 .btn-primary, .btn-secondary, .btn-danger {
-  padding: 12px 24px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+  padding: 12px 24px; border: none; border-radius: 8px; font-weight: 600;
+  cursor: pointer; transition: all 0.2s; font-size: 14px;
 }
-
-.btn-primary {
-  background-color: #1e40af; color: white;
-}
-.btn-primary:hover {
-  background-color: #1d4ed8;
-}
-
-.btn-secondary {
-  background-color: #6b7280; color: white;
-}
-.btn-secondary:hover {
-  background-color: #4b5563;
-}
-
-.btn-danger {
-  background-color: #dc2626; color: white;
-}
-.btn-danger:hover {
-  background-color: #b91c1c;
-}
-
-/* 로딩 및 에러 상태 */
-.loading, .error {
-  text-align: center; padding: 60px 20px;
-}
-
-.loading-spinner {
-  width: 40px; height: 40px; border: 4px solid #e5e7eb; border-top: 4px solid #1e40af; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.error {
-  color: #dc2626;
-}
+.btn-primary { background: #1e40af; color: white; }
+.btn-primary:hover { background: #1d4ed8; }
+.btn-secondary { background: #6b7280; color: white; }
+.btn-secondary:hover { background: #4b5563; }
+.btn-danger { background: #dc2626; color: white; }
+.btn-danger:hover:not(:disabled) { background: #b91c1c; }
+.btn-danger:disabled { background: #9ca3af; cursor: not-allowed; }
 
 /* 반응형 */
-@media (max-width: 1023px){
-  .top-nav { display: none; }
-  .main-nav { display: none; }
-  .main-header-content { padding: 10px 20px; }
-}
-
-@media (max-width: 768px){
+@media (max-width: 768px) {
   .post-detail { padding: 20px; }
   .post-title { font-size: 24px; }
-  .post-meta { flex-direction: column; gap: 12px; }
-  .post-actions { flex-direction: column; }
-}
-
-/* ===== Footer ===== */
-.site-footer { background:#fff; border-top:1px solid #e5e7eb; margin-top:24px; }
-
-/* 상단 링크/바로가기 */
-.footer-topbar{
-  max-width:1200px; margin:0 auto; padding:10px 20px;
-  display:flex; align-items:center; justify-content:space-between; gap:16px;
-}
-.left-links a{ margin-right:24px; color:#2563eb; font-weight:700; text-decoration:none; }
-.left-links a:hover{ text-decoration:underline; }
-.right-shortcuts{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-.jump select{ border:1px solid #d1d5db; border-radius:6px; padding:8px 10px; background:#fff; }
-.jump .btn{ margin-left:6px; background:#111827; color:#fff; border:none; border-radius:6px; padding:8px 12px; cursor:pointer; }
-
-/* 검은색 연락처 바 */
-.footer-contacts{
-  background:#0a0a0a; color:#fff;
-  display:grid; grid-template-columns: repeat(5,1fr) 200px; gap:24px;
-  align-items:start; padding:18px 20px; justify-items:start;
-}
-.footer-contacts .contact-col{ line-height:1.6; }
-.footer-contacts .dep{ font-weight:800; margin-bottom:2px; }
-.footer-contacts .tel{ font-weight:700; }
-.footer-contacts .fax{ color:#d1d5db; font-weight:700; }
-
-.footer-actions{ align-self:center; justify-self:end; display:flex; gap:10px; }
-.sitemap-btn{ background:#fff; color:#111827; border:none; border-radius:6px; padding:10px 16px; cursor:pointer; }
-.top-btn{ background:transparent; color:#fff; border:none; padding:10px 12px; cursor:pointer; font-weight:800; }
-
-/* 하단 주소/카피라이트 */
-.footer-bottom{
-  max-width:1200px; margin:0 auto; padding:16px 20px 28px; color:#111827; font-size:14px;
-}
-.org-logo{ font-weight:900; margin-bottom:8px; }
-.addr{ color:#4b5563; margin-bottom:6px; }
-.copy{ color:#6b7280; font-size:13px; }
-
-@media (max-width: 1000px){
-  .footer-contacts{ grid-template-columns: 1fr 1fr; }
-  .footer-actions{ justify-self:start; margin-top:8px; }
-}
-
-/* 스크린리더용 */
-.sr-only{
-  position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;
+  .post-meta { flex-direction: column; gap: 8px; }
+  .post-actions { justify-content: center; flex-wrap: wrap; }
 }
 </style>
