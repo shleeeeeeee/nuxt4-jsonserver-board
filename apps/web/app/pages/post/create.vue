@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { apiService } from '~/services/api'
 
 const router = useRouter()
 
 const form = ref({
   title: '',
   content: '',
-  author: ''
+  author: '',
+  category: '전체'
 })
 
 const loading = ref(false)
@@ -33,19 +35,29 @@ const validateForm = () => {
 }
 
 // 게시글 작성
-const createPost = () => {
+const createPost = async () => {
   if (!validateForm()) {
     return
   }
 
   loading.value = true
   
-  // 하드코딩된 데이터에서는 실제 저장은 하지 않고 목록으로만 이동
-  setTimeout(() => {
+  try {
+    await apiService.createPost({
+      title: form.value.title.trim(),
+      content: form.value.content.trim(),
+      author: form.value.author.trim(),
+      category: form.value.category
+    })
+    
     alert('게시글이 작성되었습니다.')
-    loading.value = false
     router.push('/')
-  }, 1000)
+  } catch (error) {
+    console.error('게시글 작성 실패:', error)
+    alert('게시글 작성에 실패했습니다. 다시 시도해주세요.')
+  } finally {
+    loading.value = false
+  }
 }
 
 // 목록으로 돌아가기
@@ -58,7 +70,8 @@ const resetForm = () => {
   form.value = {
     title: '',
     content: '',
-    author: ''
+    author: '',
+    category: '전체'
   }
   errors.value = {}
 }
@@ -130,6 +143,25 @@ const resetForm = () => {
                 placeholder="제목을 입력하세요"
               />
               <span v-if="errors.title" class="error-message">{{ errors.title }}</span>
+            </div>
+
+            <div class="form-group">
+              <label for="category" class="form-label">분류</label>
+              <select
+                id="category"
+                v-model="form.category"
+                class="form-input"
+              >
+                <option value="전체">전체</option>
+                <option value="채용">채용</option>
+                <option value="입찰">입찰</option>
+                <option value="모집">모집</option>
+                <option value="행사">행사</option>
+                <option value="홍보">홍보</option>
+                <option value="자격">자격</option>
+                <option value="교육">교육</option>
+                <option value="공지">공지</option>
+              </select>
             </div>
 
             <div class="form-group">
