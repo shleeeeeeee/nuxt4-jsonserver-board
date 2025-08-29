@@ -3,6 +3,7 @@ export interface Post {
     title: string
     content: string
     author: string
+    authorId?: string
     category: string
     createdAt: string
     views: number
@@ -163,11 +164,22 @@ export class ApiService {
     }
 
     async createPost(data: PostCreateData): Promise<Post> {
-        const generateId = () => Math.random().toString(36).substring(2, 6)
+        // 작성자 ID 가져오기 (없으면 생성)
+        let authorId = localStorage.getItem('userId')
+        if (!authorId) {
+            authorId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5)
+            localStorage.setItem('userId', authorId)
+        }
+
+        // 게시글 ID 생성 (기존 코드)
+        const generateId = async () => {
+            // ... 기존 순차 ID 생성 코드
+        }
 
         const newPost = {
-            id: generateId(),
+            id: await generateId(),
             ...data,
+            authorId: authorId,  // ← 추가!
             createdAt: new Date().toISOString(),
             views: 0,
             hasFile: false

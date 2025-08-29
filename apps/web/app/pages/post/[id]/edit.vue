@@ -136,8 +136,16 @@ const scrollToTop = () => {
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
-onMounted(() => {
-  loadPost()
+onMounted(async () => {
+  await loadPost()  // await 추가
+
+  // 권한 체크 추가
+  const myUserId = localStorage.getItem('userId')
+  if (!myUserId || originalPost.value?.authorId !== myUserId) {
+    alert('수정 권한이 없습니다.')
+    router.push(`/post/${postId.value}`)
+    return
+  }
 })
 </script>
 

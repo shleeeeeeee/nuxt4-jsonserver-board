@@ -18,6 +18,12 @@ const loading = ref(true)
 const error = ref('')
 const deleting = ref(false)
 
+// 내 글인지 확인 (추가된 부분)
+const isMyPost = computed(() => {
+  const myUserId = localStorage.getItem('userId')
+  return post.value?.authorId === myUserId
+})
+
 // 게시글 데이터 가져오기
 const loadPost = async () => {
   try {
@@ -195,19 +201,25 @@ onMounted(() => {
             <p>{{ post.content }}</p>
           </div>
 
-          <!-- 액션 버튼들 - NuxtLink로 변경 -->
+          <!-- 액션 버튼들 - 수정된 부분 -->
           <div class="post-actions">
             <button @click="goToList" class="btn-secondary">목록</button>
             <div class="right-actions">
-              <!-- 수정 버튼을 NuxtLink로 변경 -->
+              <!-- v-if="isMyPost" 추가 -->
               <NuxtLink
+                  v-if="isMyPost"
                   :to="`/post/${postId}/edit`"
                   class="btn-primary"
                   style="text-decoration: none; display: inline-block;"
               >
                 수정
               </NuxtLink>
-              <button @click="handleDeletePost" :disabled="deleting" class="btn-danger">
+              <button
+                  v-if="isMyPost"
+                  @click="handleDeletePost"
+                  :disabled="deleting"
+                  class="btn-danger"
+              >
                 {{ deleting ? '삭제 중...' : '삭제' }}
               </button>
             </div>
