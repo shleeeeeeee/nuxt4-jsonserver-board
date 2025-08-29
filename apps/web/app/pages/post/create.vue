@@ -68,6 +68,10 @@ const submitPost = async () => {
     return
   }
 
+  if (!confirm("정말로 이 게시글을 등록하시겠습니까?")) {
+    return // 취소 버튼 클릭 시 함수 종료
+  }
+
   try {
     loading.value = true
 
@@ -252,7 +256,8 @@ onMounted(() => {
             <!-- 버튼 그룹 -->
             <div class="form-actions">
               <button type="button" @click="goToList" class="btn-secondary">목록</button>
-              <button type="button" @click="resetForm" class="btn-warning">초기화</button>
+            <!-- 윤지영프로님 피드백으로 초기화 버튼 주석 -->
+            <!--<button type="button" @click="resetForm" class="btn-warning">초기화</button>-->
               <button type="submit" :disabled="loading" class="btn-primary">
                 <span v-if="loading">작성 중...</span>
                 <span v-else>작성완료</span>

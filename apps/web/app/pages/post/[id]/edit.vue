@@ -28,7 +28,7 @@ const errors = ref<Record<string, string>>({})
 const originalPost = ref<Post | null>(null)
 const saving = ref(false)
 
-// 게시글 데이터 가져오기
+// 20250829 이상현 게시글 데이터 가져오기
 const loadPost = async () => {
   loading.value = true
   try {
@@ -79,6 +79,10 @@ const validateForm = () => {
 // 게시글 수정
 const updatePost = async () => {
   if (!validateForm()) {
+    return
+  }
+
+  if (!confirm("정말로 이 게시글을 수정하시겠습니까?")) {
     return
   }
 
@@ -260,7 +264,8 @@ onMounted(() => {
             <div class="form-actions">
               <button type="button" @click="goToList" class="btn-secondary">목록</button>
               <button type="button" @click="goToDetail" class="btn-secondary">취소</button>
-              <button type="button" @click="resetForm" class="btn-secondary">초기화</button>
+              <!-- 윤지영프로님 피드백으로 초기화 버튼 주석 -->
+              <!--<button type="button" @click="resetForm" class="btn-secondary">초기화</button>-->
               <button type="submit" :disabled="saving" class="btn-primary">
                 {{ saving ? '수정 중...' : '수정 완료' }}
               </button>
