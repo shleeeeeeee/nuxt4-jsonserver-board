@@ -7,7 +7,7 @@
       "author": "관리자",
       "category": "공지",
       "createdAt": "2025-07-28T00:00:00Z",
-      "views": 17,
+      "views": 19,
       "hasFile": true
     },
     {
@@ -17,7 +17,7 @@
       "author": "관리자",
       "category": "자격",
       "createdAt": "2025-08-07T00:00:00Z",
-      "views": 15,
+      "views": 18,
       "hasFile": false
     },
     {
@@ -77,7 +77,7 @@
       "author": "홍보팀",
       "category": "홍보",
       "createdAt": "2025-03-28T00:00:00Z",
-      "views": 61,
+      "views": 62,
       "hasFile": true
     },
     {
@@ -87,7 +87,7 @@
       "author": "테스트ㅇㅇ",
       "category": "행사",
       "createdAt": "2025-08-28T07:46:33.275Z",
-      "views": 7,
+      "views": 9,
       "hasFile": false
     },
     {
@@ -132,12 +132,12 @@
     },
     {
       "id": "uy5u",
-      "title": "수정된다",
-      "content": "수정된다",
-      "author": "ㄹㅁㄴㅇㄻㄴㅇㄻㄴㅇ",
-      "category": "교육",
+      "title": "수정된다ㅇㅇㅇ",
+      "content": "수정된다ㅇㅇㅇㅇ",
+      "author": "ㄹㅁㄴㅇㄻㄴㅇㄻㄴㅇㅇㅇ",
+      "category": "입찰",
       "createdAt": "2025-08-28T08:39:43.835Z",
-      "views": 5,
+      "views": 8,
       "hasFile": false
     },
     {
@@ -147,6 +147,36 @@
       "author": "ㅁㄴㄹㅇㅇㅁㄴㄹㄹㅇㅁㄴ",
       "category": "자격",
       "createdAt": "2025-08-28T09:23:29.660Z",
+      "views": 0,
+      "hasFile": false
+    },
+    {
+      "id": "n17a",
+      "title": "fsadsfas",
+      "content": "fdsafdsafdsafdsasfd",
+      "author": "fasdfasfda",
+      "category": "홍보",
+      "createdAt": "2025-08-29T01:06:12.761Z",
+      "views": 0,
+      "hasFile": false
+    },
+    {
+      "id": "5k0x",
+      "title": "ㅇㅀㄴㅇ",
+      "content": "ㅀㅇㄴ",
+      "author": "ㄴㅀㅇㄶ",
+      "category": "교육",
+      "createdAt": "2025-08-29T01:18:29.429Z",
+      "views": 0,
+      "hasFile": false
+    },
+    {
+      "id": "jzb6",
+      "title": "ㅁㄴㅇㄻㄴㅇ",
+      "content": "ㅇㅁㄴㄻㄴㅇㄹㄴㅇㅁ",
+      "author": "ㄹㄴㅇㄻㄴㅇㄹ",
+      "category": "채용",
+      "createdAt": "2025-08-29T01:50:45.232Z",
       "views": 0,
       "hasFile": false
     }

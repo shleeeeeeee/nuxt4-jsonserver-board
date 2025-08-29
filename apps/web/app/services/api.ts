@@ -1,5 +1,5 @@
 export interface Post {
-    id: string | number  // ID를 string 또는 number로 처리
+    id: string | number
     title: string
     content: string
     author: string
@@ -67,10 +67,52 @@ export class ApiService {
         }
     }
 
-    // 게시글 목록 조회 (JSON Server 1.0.0-beta.3 형식)
+    // 게시글 목록 조회 - 검색이 있을 때만 특별 처리
     async getPosts(params: PostListParams = {}): Promise<PostListResponse> {
         const { page = 1, limit = 10, category, search, searchField = 'title' } = params
 
+        // 검색어가 있을 경우 - 전체 데이터를 가져와서 클라이언트에서 필터링
+        if (search && search.trim()) {
+            // 전체 데이터 가져오기
+            let url = '/posts'
+            if (category && category !== '전체') {
+                url += `?category=${category}`
+            }
+
+            const allPosts = await this.request<Post[]>(url)
+
+            // 클라이언트에서 검색 필터링
+            const searchTerm = search.trim().toLowerCase()
+            const filteredPosts = allPosts.filter(post => {
+                const fieldValue = String(post[searchField] || '').toLowerCase()
+                return fieldValue.includes(searchTerm)
+            })
+
+            // 정렬 (최신순)
+            filteredPosts.sort((a, b) => {
+                const dateA = new Date(a.createdAt).getTime()
+                const dateB = new Date(b.createdAt).getTime()
+                return dateB - dateA
+            })
+
+            // 페이지네이션
+            const total = filteredPosts.length
+            const totalPages = Math.ceil(total / limit)
+            const start = (page - 1) * limit
+            const paginatedPosts = filteredPosts.slice(start, start + limit)
+
+            return {
+                data: paginatedPosts,
+                pagination: {
+                    page: page,
+                    limit: limit,
+                    total: total,
+                    totalPages: totalPages
+                }
+            }
+        }
+
+        // 검색어가 없을 경우 - 기존 방식 그대로
         const queryParams = new URLSearchParams({
             _page: page.toString(),
             _per_page: limit.toString(),
@@ -80,10 +122,6 @@ export class ApiService {
 
         if (category && category !== '전체') {
             queryParams.append('category', category)
-        }
-
-        if (search?.trim()) {
-            queryParams.append(`${searchField}_like`, search.trim())
         }
 
         const response = await this.request<{
@@ -125,7 +163,6 @@ export class ApiService {
     }
 
     async createPost(data: PostCreateData): Promise<Post> {
-        // ID 생성 (랜덤 4자리 문자열)
         const generateId = () => Math.random().toString(36).substring(2, 6)
 
         const newPost = {
@@ -157,6 +194,7 @@ export class ApiService {
 
     async getCategories(): Promise<string[]> {
         try {
+            // 페이지네이션 없이 전체 데이터 가져오기
             const response = await this.request<{ data: Post[] }>('/posts?_per_page=1000')
             const posts = response.data
             const categories = [...new Set(posts.map(post => post.category))]
