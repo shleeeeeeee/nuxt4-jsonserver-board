@@ -13,6 +13,10 @@ const loading = ref(true)
 const error = ref('')
 const categories = ref<string[]>(['전체'])
 
+// 로그인
+const isLoggedIn = ref(false)
+const userNickname = ref('')
+
 // 필터 및 검색 상태
 const activeTab = ref('전체')
 const searchField = ref<'title' | 'content' | 'author'>('title')
@@ -50,6 +54,34 @@ const loadPosts = async () => {
   } finally {
     loading.value = false
   }
+}
+
+// 로그인 함수
+const checkLoginStatus = () => {
+  const loggedIn = localStorage.getItem('isLoggedIn') === 'true'
+  const nickname = localStorage.getItem('nickname') || ''
+
+  isLoggedIn.value = loggedIn
+  userNickname.value = nickname
+}
+
+const handleLogout = () => {
+  if (confirm('로그아웃 하시겠습니까?')) {
+    localStorage.removeItem('userId')
+    localStorage.removeItem('username')
+    localStorage.removeItem('nickname')
+    localStorage.removeItem('isLoggedIn')
+
+    isLoggedIn.value = false
+    userNickname.value = ''
+
+    alert('로그아웃 되었습니다.')
+    window.location.reload()
+  }
+}
+
+const goToLogin = () => {
+  router.push('/login')  // 또는 navigateTo('/login')
 }
 
 // 카테고리 로딩
@@ -92,7 +124,13 @@ const goToPost = (postId: number) => {
 }
 
 // 게시글 작성 페이지로 이동
+// 기존 함수를 이렇게 수정
 const goToCreate = () => {
+  if (!isLoggedIn.value) {
+    alert('로그인이 필요한 서비스입니다.')
+    router.push('/login')  // 또는 navigateTo('/login')
+    return
+  }
   router.push('/post/create')
 }
 
@@ -107,6 +145,7 @@ const formatDate = (dateString: string) => {
 
 // 컴포넌트 마운트
 onMounted(async () => {
+  checkLoginStatus()
   await loadCategories()
   await loadPosts()
 })
@@ -125,6 +164,15 @@ onMounted(async () => {
           <a href="#">영역자격센터</a>
         </nav>
         <div class="top-right">
+          <div class="auth-buttons">
+            <template v-if="isLoggedIn">
+              <span class="user-info">{{ userNickname }}님</span>
+              <button class="auth-btn logout-btn" @click="handleLogout">로그아웃</button>
+            </template>
+            <template v-else>
+              <button class="auth-btn login-btn" @click="goToLogin">로그인</button>
+            </template>
+          </div>
           <button class="menu-btn">≡</button>
         </div>
       </div>
@@ -191,7 +239,9 @@ onMounted(async () => {
             </button>
           </div>
           <div class="search-right">
-            <button @click="goToCreate" class="create-btn">게시글 작성</button>
+            <button @click="goToCreate" class="create-btn">
+              {{ isLoggedIn ? '게시글 작성' : '로그인 후 작성' }}
+            </button>
           </div>
         </div>
 
@@ -413,5 +463,47 @@ onMounted(async () => {
   .search-left { justify-content: stretch; }
   .thead, .trow { grid-template-columns: 60px 80px 1fr 80px; }
   .th.author, .td.author, .th.views, .td.views { display: none; }
+}
+
+/* 인증 버튼 스타일 */
+.auth-buttons {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-right: 15px;
+}
+
+.user-info {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.auth-btn {
+  padding: 6px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.login-btn {
+  background-color: #1e40af;
+  color: white;
+}
+
+.login-btn:hover {
+  background-color: #1d4ed8;
+}
+
+.logout-btn {
+  background-color: #6b7280;
+  color: white;
+}
+
+.logout-btn:hover {
+  background-color: #4b5563;
 }
 </style>

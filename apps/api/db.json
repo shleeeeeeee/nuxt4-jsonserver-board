@@ -1,13 +1,22 @@
 {
+  "users": [
+    {
+      "id": "fa9e",
+      "username": "shlee",
+      "password": "12345",
+      "nickname": "이상현",
+      "createdAt": "2025-08-30T07:09:03.187Z"
+    }
+  ],
   "posts": [
     {
       "id": "561517",
-      "title": "동영상 테스트",
-      "content": "동영상 테스트를 위한 게시글입니다. 다양한 동영상 형식을 테스트해보겠습니다.",
+      "title": "테스트",
+      "content": "테스트를 위한 게시글입니다.",
       "author": "관리자",
       "category": "공지",
       "createdAt": "2025-07-28T00:00:00Z",
-      "views": 19,
+      "views": 34,
       "hasFile": true
     },
     {
@@ -17,167 +26,83 @@
       "author": "관리자",
       "category": "자격",
       "createdAt": "2025-08-07T00:00:00Z",
-      "views": 18,
-      "hasFile": false
-    },
-    {
-      "id": "561473",
-      "title": "testtest_1",
-      "content": "테스트 게시글 1번입니다. 다양한 기능을 테스트해보겠습니다.",
-      "author": "테스터",
-      "category": "채용",
-      "createdAt": "2025-06-23T00:00:00Z",
-      "views": 15,
-      "hasFile": false
-    },
-    {
-      "id": "561472",
-      "title": "test_C",
-      "content": "테스트 게시글 C입니다. 홍보 관련 내용을 담고 있습니다.",
-      "author": "홍보팀",
-      "category": "홍보",
-      "createdAt": "2025-06-23T00:00:00Z",
-      "views": 26,
-      "hasFile": true
-    },
-    {
-      "id": "561471",
-      "title": "test_a",
-      "content": "테스트 게시글 A입니다. 일반적인 내용을 담고 있습니다.",
-      "author": "일반사용자",
-      "category": "전체",
-      "createdAt": "2025-06-23T00:00:00Z",
-      "views": 21,
-      "hasFile": false
-    },
-    {
-      "id": "561457",
-      "title": "test11",
-      "content": "테스트 게시글 11번입니다. 다양한 내용을 테스트해보겠습니다.",
-      "author": "테스터",
-      "category": "전체",
-      "createdAt": "2025-06-19T00:00:00Z",
-      "views": 23,
-      "hasFile": true
-    },
-    {
-      "id": "561456",
-      "title": "test_test",
-      "content": "테스트용 게시글입니다. 게시판 기능을 점검하기 위한 내용입니다.",
-      "author": "시스템관리자",
-      "category": "전체",
-      "createdAt": "2025-06-19T00:00:00Z",
       "views": 33,
       "hasFile": false
     },
     {
-      "id": "561179",
-      "title": "공지사항 - 홍보",
-      "content": "홍보 관련 공지사항입니다. 새로운 서비스와 이벤트를 소개합니다.",
-      "author": "홍보팀",
-      "category": "홍보",
-      "createdAt": "2025-03-28T00:00:00Z",
-      "views": 62,
-      "hasFile": true
-    },
-    {
-      "id": "e51c",
-      "title": "테스트야 제발ㅇㅇㅇㅇ",
-      "content": "테스트ㅇㅇㅇㅇ",
-      "author": "테스트ㅇㅇ",
-      "category": "행사",
-      "createdAt": "2025-08-28T07:46:33.275Z",
-      "views": 9,
-      "hasFile": false
-    },
-    {
-      "id": "e6e2",
-      "title": "수정 테스트",
-      "content": "수정",
-      "author": "수정",
-      "category": "교육",
-      "createdAt": "2025-08-28T07:55:32.731Z",
+      "id": "ix6b",
+      "title": "테스트2 - 김병희",
+      "content": "이런 것들을 피해야 합니다.\n\n근력 없는 근육, 신뢰 없는 우정, 책임 없는 의견, 미학적 관점 없는 변신, 가치를 축적하지 못하는 시간, 영양소 없는 음식, 정의 없는 권력, 엄밀함 없는 사실들, 학식 없는 학위, 강인함 없는 군대, 문명 없는 발전, 깊이 없는 복잡함, 내용 없는 유창함, 그리고 무엇보다도, 관용 없는 종교.",
+      "author": "김병희",
+      "category": "자격",
+      "createdAt": "2025-08-29T06:55:15.601Z",
       "views": 12,
       "hasFile": false
     },
     {
-      "id": "6ec1",
-      "title": "ㅇㅁㄴㄹ",
-      "content": "ㅁㄴㅇㄹㅇㅁㄴㄹ",
-      "author": "ㅁㄴㅇㄻㄴㅇㄹ",
-      "category": "홍보",
-      "createdAt": "2025-08-28T08:19:53.319Z",
-      "views": 0,
-      "hasFile": false
-    },
-    {
-      "id": "9f00",
-      "title": "ㅁㄴㄹㅇㅁㄴㄹㅇ",
-      "content": "ㅁㄹㅇㄴㅁㄹㅇㄴㅁㄴㄹㅇㄹㅇㅁㄴ",
-      "author": "ㅁㄴㄹㅇㅁㄴㄹㅇㅁㄹㅇㄴㅁㄴㄹㅇㅇ",
+      "id": "a0ba",
+      "title": "111",
+      "content": "11111ㅇㅇㅇ",
+      "author": "1111",
       "category": "교육",
-      "createdAt": "2025-08-28T08:20:01.423Z",
-      "views": 2,
+      "authorId": "user_1756459671737_6rsee",
+      "createdAt": "2025-08-29T09:28:32.723Z",
+      "views": 9,
       "hasFile": false
     },
     {
-      "id": "hft7",
-      "title": "ㄷㅂㅈㄱㅂㅈㄱ",
-      "content": "ㅂㅈㄱㄷㅂㅈㄱㄷㄱㄷㅂㅈ",
-      "author": "ㄷㅂㅈㄱㄷㅂㅈㄱ",
-      "category": "교육",
-      "createdAt": "2025-08-28T08:31:53.973Z",
-      "views": 1,
-      "hasFile": false
-    },
-    {
-      "id": "uy5u",
-      "title": "수정된다ㅇㅇㅇ",
-      "content": "수정된다ㅇㅇㅇㅇ",
-      "author": "ㄹㅁㄴㅇㄻㄴㅇㄻㄴㅇㅇㅇ",
-      "category": "입찰",
-      "createdAt": "2025-08-28T08:39:43.835Z",
-      "views": 8,
-      "hasFile": false
-    },
-    {
-      "id": "yvvl",
-      "title": "ㄴㄹㅇㅁ",
-      "content": "ㄹㅇㅁㄴㄴㄹㅇㅁㄹㅇㅁㄴㅁㄴㄹㅇ",
-      "author": "ㅁㄴㄹㅇㅇㅁㄴㄹㄹㅇㅁㄴ",
+      "id": "8b68",
+      "title": "나만 삭제할수있도록 테스트",
+      "content": "권한 테스트",
+      "author": "삭제",
       "category": "자격",
-      "createdAt": "2025-08-28T09:23:29.660Z",
-      "views": 0,
+      "authorId": "user_1756459671737_6rsee",
+      "createdAt": "2025-08-29T09:31:40.603Z",
+      "views": 7,
       "hasFile": false
     },
     {
-      "id": "n17a",
-      "title": "fsadsfas",
-      "content": "fdsafdsafdsafdsasfd",
-      "author": "fasdfasfda",
-      "category": "홍보",
-      "createdAt": "2025-08-29T01:06:12.761Z",
-      "views": 0,
-      "hasFile": false
-    },
-    {
-      "id": "5k0x",
-      "title": "ㅇㅀㄴㅇ",
-      "content": "ㅀㅇㄴ",
-      "author": "ㄴㅀㅇㄶ",
+      "id": "8898",
+      "title": "쇼ㅑ효ㅗㅓ",
+      "content": "ㅗ허호ㅓㅗ허",
+      "author": "ㅗ허호ㅓ",
       "category": "교육",
-      "createdAt": "2025-08-29T01:18:29.429Z",
-      "views": 0,
+      "authorId": "user_1756459671737_6rsee",
+      "createdAt": "2025-08-29T09:59:01.981Z",
+      "views": 7,
       "hasFile": false
     },
     {
-      "id": "jzb6",
-      "title": "ㅁㄴㅇㄻㄴㅇ",
-      "content": "ㅇㅁㄴㄻㄴㅇㄹㄴㅇㅁ",
-      "author": "ㄹㄴㅇㄻㄴㅇㄹ",
-      "category": "채용",
-      "createdAt": "2025-08-29T01:50:45.232Z",
-      "views": 0,
+      "id": "20d7",
+      "title": "sd",
+      "content": "sd",
+      "author": "sdf",
+      "category": "교육",
+      "authorId": "user_1756462019436_lyxaj",
+      "createdAt": "2025-08-29T10:06:59.437Z",
+      "views": 9,
+      "hasFile": false
+    },
+    {
+      "id": "d5e0",
+      "title": "ㅗ허ㅗ허",
+      "content": "ㅗ허ㅗ허ㅗ허",
+      "author": "호ㅓㅗ허",
+      "category": "교육",
+      "authorId": "user_1756461677957_16t05",
+      "createdAt": "2025-08-29T10:09:43.616Z",
+      "views": 6,
+      "hasFile": false
+    },
+    {
+      "id": "c407",
+      "title": "dddd",
+      "content": "ddddd",
+      "author": "dddd",
+      "category": "자격",
+      "authorId": "fa9e",
+      "createdAt": "2025-08-30T07:09:23.358Z",
+      "views": 1,
       "hasFile": false
     }
   ]
