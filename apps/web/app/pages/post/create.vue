@@ -24,12 +24,12 @@ const loadCategories = async () => {
 
     // 기본 카테고리 설정
     if (categories.value.length > 0) {
-      form.value.category = categories.value[0]
+      form.value.category = ''
     }
   } catch (error) {
     console.error('카테고리 로딩 오류:', error)
     categories.value = ['교육', '홍보', '자격', '행사', '채용', '공지']
-    form.value.category = '교육'
+    form.value.category = ''
   }
 }
 
