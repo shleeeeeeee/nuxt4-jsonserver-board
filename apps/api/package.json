@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "json-server --watch db.json --port 4000 --host 192.168.1.123"
+    "dev": "json-server --watch db.json --port 4000 --host 0.0.0.0"
   },
   "keywords": [],
   "author": "",

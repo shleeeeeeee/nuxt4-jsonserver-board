@@ -29,7 +29,7 @@ async function handleLogin() {
     error.value = ''
 
     // JSON Server에서 사용자 정보 조회
-    const response = await fetch(`http://localhost:4000/users?username=${form.value.username}`)
+    const response = await fetch(`http://192.168.1.123:4000/users?username=${form.value.username}`)
     const users = await response.json()
 
     if (users.length === 0) {

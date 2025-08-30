@@ -54,7 +54,7 @@ async function handleRegister() {
     error.value = ''
 
     // 중복 체크
-    const checkResponse = await fetch(`http://localhost:4000/users?username=${form.value.username}`)
+    const checkResponse = await fetch(`http://192.168.1.123:4000/users?username=${form.value.username}`)
     const existingUsers = await checkResponse.json()
 
     if (existingUsers.length > 0) {
@@ -70,7 +70,7 @@ async function handleRegister() {
       createdAt: new Date().toISOString(),
     }
 
-    const response = await fetch('http://localhost:4000/users', {
+    const response = await fetch('http://192.168.1.123:4000/users', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
