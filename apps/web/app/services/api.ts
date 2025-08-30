@@ -117,7 +117,7 @@ export class ApiService {
         const queryParams = new URLSearchParams({
             _page: page.toString(),
             _per_page: limit.toString(),
-            _sort: 'createdAt',
+            _sort: '-createdAt',
             _order: 'desc'
         })
 
@@ -176,11 +176,15 @@ export class ApiService {
             // ... 기존 순차 ID 생성 코드
         }
 
+        // 현재 시간에 1초를 더해서 항상 최신이 되도록 보장
+        const now = new Date()
+        now.setSeconds(now.getSeconds() + 1)
+
         const newPost = {
             id: await generateId(),
             ...data,
-            authorId: authorId,  // ← 추가!
-            createdAt: new Date().toISOString(),
+            authorId: authorId,
+            createdAt: now.toISOString(),
             views: 0,
             hasFile: false
         }
