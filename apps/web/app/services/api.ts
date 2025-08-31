@@ -171,9 +171,15 @@ export class ApiService {
             localStorage.setItem('userId', authorId)
         }
 
-        // 게시글 ID 생성 (기존 코드)
+        // 게시글 ID 생성 - 숫자로 변경
         const generateId = async () => {
-            // ... 기존 순차 ID 생성 코드
+            try {
+                const posts = await this.request<Post[]>('/posts')
+                const maxId = Math.max(...posts.map(p => parseInt(String(p.id)) || 0), 0)
+                return maxId + 1
+            } catch (error) {
+                return 1 // 첫 번째 게시글
+            }
         }
 
         // 현재 시간에 1초를 더해서 항상 최신이 되도록 보장
